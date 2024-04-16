@@ -36,7 +36,7 @@ function preload() {
 let loadedImage = [];
 
 function setup() {
-  //createCanvas(756, 750);
+  createCanvas(600, 800);
   createCanvas(displayWidth, displayHeight);
 
   sound.play();

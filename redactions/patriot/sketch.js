@@ -76,6 +76,8 @@ function draw() {
   //   osc.amp(amp, 0.1);
   // }
 }
- 
+ function touchMoved() {
+  userStartAudio();
+}
 
 

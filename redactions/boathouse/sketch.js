@@ -1,5 +1,5 @@
 // https://ojack.xyz/PIXELSYNTH/
-let speech;
+
 let marks = [];
 let fishmarks = [];
 let addMark = setInterval(makeMark, 1000);

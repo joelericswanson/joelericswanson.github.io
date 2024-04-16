@@ -75,7 +75,7 @@ function draw() {
 }
 function makeMark() {
   let num = int(random(imgset.length));
-  marks.push(new Mark(imgset[num], random(width),-50, random(1)));
+  marks.push(new Mark(imgset[num], random(600),-50, random(1)));
 }
 function touchStarted() {
   userStartAudio();

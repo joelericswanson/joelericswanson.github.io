@@ -174,3 +174,8 @@ class Particle {
   }
 
 }
+
+function touchStarted() {
+  userStartAudio();
+}
+

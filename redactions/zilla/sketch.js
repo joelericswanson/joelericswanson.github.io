@@ -30,7 +30,7 @@ function setup() {
   imgs.push(o2);
   imgs.push(o3);
   imgs.push(x);
-  const particlesLength = 10;
+  const particlesLength = 3;
 
   for (let i = 0; i < particlesLength; i++) {
     particles.push(new Particle()); //initialize a new Particle for every spot in the particles array

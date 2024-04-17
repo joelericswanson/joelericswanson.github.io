@@ -167,7 +167,7 @@ class Particle {
   attracted(mousePos) {
     let force = p5.Vector.sub(mousePos, this.pos); //the force on each particle moves in is the target position minus its current position (also its distance)
     let distSquared = force.magSq(); //the distance between current and target position squared (will be used to calculate gravity force enacted on particle)
-    let grav = -50; //set the gravity enacted on the particle (based on universal gravitational constant)
+    let grav = -10; //set the gravity enacted on the particle (based on universal gravitational constant)
     let magnitude = grav / distSquared; //the magnitude of the force enacted on each particle
     force.setMag(magnitude);
     this.acc = force;

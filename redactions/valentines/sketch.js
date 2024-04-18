@@ -44,7 +44,7 @@ function draw() {
   xoff = map(mouseX, 0, width, 0, height);
   
   blendMode(DARKEST);
-  tint(255, 1)
+  tint(255, 10)
   image(bg, xoff, yoff);
   imageMode(CENTER)
   for (var i = letters.length-1; i >= 0; i--) {
@@ -60,9 +60,8 @@ function draw() {
       marks.splice(i,1) 
     }
   }
-  tint(255, 255)
-  image(joel, jx, 700);
-  jx += 1;
+  tint(255, random(255));
+  image(joel, 150, 700);
 
 }
 
@@ -85,7 +84,7 @@ class Mark {
     this.ys = random(-0.01, 0.01);
     this.r = 0; //random(radians(360));
     this.theta = random(-0.001, 0.001);
-    this.ler = random(-0.0001, 0.001);
+    this.ler = random(-0.01, 0.01);
     this.a = 255;
     //this.sc = .5
  
@@ -96,7 +95,7 @@ class Mark {
     this.y = lerp(this.y, mouseY,  this.ler);
     this.x += this.xs;
     this.y += this.ys;
-    this.a -= 1;
+    this.a -= 5;
     this.r += this.theta;
   }
   display() {

@@ -62,6 +62,10 @@ function draw() {
     marks[i].update();
   }
 }
+function touchStarted() {
+  userStartAudio();
+}
+
 function makeMark(){
   particles.push(new Particle());
    if(particles.length > 50){
@@ -175,7 +179,4 @@ class Particle {
 
 }
 
-function touchStarted() {
-  userStartAudio();
-}
 

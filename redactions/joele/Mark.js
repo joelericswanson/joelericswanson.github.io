@@ -33,7 +33,7 @@ class Mark {
     imageMode(CENTER)
 
     
-    for(let i = 0; i < 50; i++){
+    for(let i = 0; i < 30; i++){
       push();
       translate(this.x, this.y);
       rotate(this.angle + this.inc * i);
@@ -59,8 +59,5 @@ class Mark {
  
   }
 
-}
-function touchStarted() {
-  userStartAudio();
 }
 

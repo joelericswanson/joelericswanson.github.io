@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Emotion Poll</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            border: 2px solid #4CAF50;
+            background: white;
+            color: #4CAF50;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .mode-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .instructions {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border: 3px solid transparent;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .color-box:hover {
+            transform: scale(1.1);
+        }
+
+        .color-box.selected {
+            border-color: #333;
+            transform: scale(1.2);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 20px auto;
+            border: 2px solid #ddd;
+            background: white;
+        }
+
+        .chart-area {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        .axis-label {
+            position: absolute;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .top-label { top: -25px; left: 50%; transform: translateX(-50%); }
+        .bottom-label { bottom: -25px; left: 50%; transform: translateX(-50%); }
+        .left-label { left: -35px; top: 50%; transform: translateY(-50%); }
+        .right-label { right: -40px; top: 50%; transform: translateY(-50%); }
+
+        .dot {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        .current-dot {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #333;
+        }
+
+        .submit-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .clear-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .selected-color-display {
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .selected-color-box {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            margin: 0 10px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Color Emotion Poll</h1>
+        <p class="subtitle">Plot colors on the happiness-strength grid</p>
+
+        <div class="mode-buttons">
+            <button class="mode-btn active" onclick="showSection('poll')">Take Poll</button>
+            <button class="mode-btn" onclick="showSection('results')">View Results</button>
+        </div>
+
+        <!-- Poll Section -->
+        <div id="poll" class="section active">
+            <div class="instructions">
+                <h3>Instructions:</h3>
+                <ol>
+                    <li>Choose a color from the palette below</li>
+                    <li>Click on the chart where you think the color belongs</li>
+                    <li>Top = Happy, Bottom = Sad</li>
+                    <li>Left = Weak, Right = Strong</li>
+                    <li>Click Submit when ready</li>
+                </ol>
+            </div>
+
+            <div class="color-grid" id="colorPalette"></div>
+            
+            <div class="selected-color-display" id="selectedColorDisplay" style="display: none;">
+                Selected: <span class="selected-color-box" id="selectedColorBox"></span>
+                <span id="selectedColorName"></span>
+            </div>
+
+            <div class="chart-container">
+                <div class="axis-label top-label">HAPPY</div>
+                <div class="axis-label bottom-label">SAD</div>
+                <div class="axis-label left-label">WEAK</div>
+                <div class="axis-label right-label">STRONG</div>
+                <div class="chart-area" id="pollChart" onclick="placeDot(event)"></div>
+            </div>
+
+            <button class="submit-btn" id="submitBtn" onclick="submitResponse()" disabled>Submit Response</button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="section">
+            <div class="stats" id="statsContainer"></div>
+            
+            <div class="chart-container">
+                <div class="axis-label top-label">HAPPY</div>
+                <div class="axis-label bottom-label">SAD</div>
+                <div class="axis-label left-label">WEAK</div>
+                <div class="axis-label right-label">STRONG</div>
+                <div class="chart-area" id="resultsChart"></div>
+            </div>
+
+            <button class="clear-btn" onclick="clearAllData()">Clear All Data</button>
+        </div>
+    </div>
+
+    <script>
+        // Define colors
+        const colors = [
+            '#FF0000', '#FF4500', '#FFA500', '#FFFF00', '#9AFF9A', '#00FF00', '#00FFFF', '#0000FF',
+            '#4169E1', '#8A2BE2', '#FF1493', '#FF69B4', '#000000', '#808080', '#A0A0A0', '#FFFFFF',
+            '#8B4513', '#D2691E', '#CD853F', '#F4A460', '#800080', '#4B0082', '#006400', '#008B8B'
+        ];
+
+        let selectedColor = null;
+        let currentPosition = null;
+        let allResponses = [];
+
+        // Initialize the app
+        function init() {
+            createColorPalette();
+            loadData();
+            updateResults();
+        }
+
+        function createColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            colors.forEach((color, index) => {
+                const colorBox = document.createElement('div');
+                colorBox.className = 'color-box';
+                colorBox.style.backgroundColor = color;
+                colorBox.onclick = () => selectColor(color, colorBox);
+                palette.appendChild(colorBox);
+            });
+        }
+
+        function selectColor(color, element) {
+            // Clear previous selection
+            document.querySelectorAll('.color-box').forEach(box => {
+                box.classList.remove('selected');
+            });
+            
+            // Select new color
+            element.classList.add('selected');
+            selectedColor = color;
+            
+            // Show selected color
+            const display = document.getElementById('selectedColorDisplay');
+            const box = document.getElementById('selectedColorBox');
+            const name = document.getElementById('selectedColorName');
+            
+            display.style.display = 'block';
+            box.style.backgroundColor = color;
+            name.textContent = color;
+            
+            updateSubmitButton();
+        }
+
+        function placeDot(event) {
+            if (!selectedColor) {
+                alert('Please select a color first!');
+                return;
+            }
+
+            const chart = document.getElementById('pollChart');
+            const rect = chart.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Remove previous dot
+            const existingDot = chart.querySelector('.current-dot');
+            if (existingDot) {
+                existingDot.remove();
+            }
+
+            // Create new dot
+            const dot = document.createElement('div');
+            dot.className = 'dot current-dot';
+            dot.style.backgroundColor = selectedColor;
+            dot.style.left = (x - 10) + 'px';
+            dot.style.top = (y - 10) + 'px';
+            chart.appendChild(dot);
+
+            currentPosition = { x: x, y: y };
+            updateSubmitButton();
+        }
+
+        function updateSubmitButton() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = !selectedColor || !currentPosition;
+        }
+
+        function submitResponse() {
+            if (!selectedColor || !currentPosition) return;
+
+            const response = {
+                color: selectedColor,
+                x: currentPosition.x,
+                y: currentPosition.y,
+                happiness: Math.round(((500 - currentPosition.y) / 500) * 100),
+                strength: Math.round((currentPosition.x / 500) * 100),
+                timestamp: new Date().toISOString()
+            };
+
+            allResponses.push(response);
+            saveData();
+
+            // Reset form
+            resetPoll();
+            alert('Response submitted successfully!');
+        }
+
+        function resetPoll() {
+            selectedColor = null;
+            currentPosition = null;
+            
+            // Clear color selection
+            document.querySelectorAll('.color-box').forEach(box => {
+                box.classList.remove('selected');
+            });
+            
+            // Hide selected color display
+            document.getElementById('selectedColorDisplay').style.display = 'none';
+            
+            // Remove current dot
+            const existingDot = document.getElementById('pollChart').querySelector('.current-dot');
+            if (existingDot) {
+                existingDot.remove();
+            }
+            
+            updateSubmitButton();
+        }
+
+        function showSection(sectionName) {
+            // Update buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show/hide sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionName).classList.add('active');
+
+            if (sectionName === 'results') {
+                updateResults();
+            }
+        }
+
+        function updateResults() {
+            updateStats();
+            displayResultsDots();
+        }
+
+        function updateStats() {
+            const container = document.getElementById('statsContainer');
+            
+            if (allResponses.length === 0) {
+                container.innerHTML = '<div class="stat-box"><div class="stat-number">0</div><div>No responses yet</div></div>';
+                return;
+            }
+
+            const totalResponses = allResponses.length;
+            const avgHappiness = Math.round(allResponses.reduce((sum, r) => sum + r.happiness, 0) / totalResponses);
+            const avgStrength = Math.round(allResponses.reduce((sum, r) => sum + r.strength, 0) / totalResponses);
+
+            // Find most common color
+            const colorCounts = {};
+            allResponses.forEach(r => {
+                colorCounts[r.color] = (colorCounts[r.color] || 0) + 1;
+            });
+            const mostCommonColor = Object.keys(colorCounts).reduce((a, b) => 
+                colorCounts[a] > colorCounts[b] ? a : b);
+
+            container.innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-number">${totalResponses}</div>
+                    <div>Total Responses</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">${avgHappiness}%</div>
+                    <div>Avg Happiness</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">${avgStrength}%</div>
+                    <div>Avg Strength</div>
+                </div>
+                <div class="stat-box">
+                    <div style="width: 30px; height: 30px; background: ${mostCommonColor}; margin: 0 auto 5px; border-radius: 5px;"></div>
+                    <div>Most Popular</div>
+                </div>
+            `;
+        }
+
+        function displayResultsDots() {
+            const chart = document.getElementById('resultsChart');
+            
+            // Clear existing dots
+            chart.innerHTML = '';
+            
+            // Add dots for each response
+            allResponses.forEach((response, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.backgroundColor = response.color;
+                dot.style.left = (response.x - 8) + 'px';
+                dot.style.top = (response.y - 8) + 'px';
+                dot.title = `Color: ${response.color}\nHappiness: ${response.happiness}%\nStrength: ${response.strength}%`;
+                chart.appendChild(dot);
+            });
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('colorPollData', JSON.stringify(allResponses));
+            } catch (e) {
+                console.warn('Could not save to localStorage');
+            }
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('colorPollData');
+                if (saved) {
+                    allResponses = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn('Could not load from localStorage');
+                allResponses = [];
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to delete all poll responses? This cannot be undone.')) {
+                allResponses = [];
+                saveData();
+                updateResults();
+                alert('All data cleared successfully.');
+            }
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>

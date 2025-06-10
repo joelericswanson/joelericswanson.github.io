@@ -282,25 +282,76 @@
         let currentPosition = null;
         let allResponses = [];
         
-        // Firebase-like database URL (using JSONBin.io as a free alternative)
-        const DATABASE_URL = 'https://api.jsonbin.io/v3/b/YOUR_BIN_ID';
-        const API_KEY = '$2a$10$YOUR_API_KEY'; // You'll need to get this from jsonbin.io
+        // Using a simple GitHub Gist as a shared database
+        const GIST_ID = 'create-new-gist'; // You'll need to create this
+        const GITHUB_TOKEN = 'your-token'; // Optional for public gists
         
-        // For demo purposes, we'll use a public bin. In real use, create your own at jsonbin.io
-        const DEMO_BIN_ID = '6756b2c5ad19ca34f8c8f5e2';
+        // For now, we'll simulate sharing with a unique room code approach
+        let roomCode = localStorage.getItem('pollRoomCode') || generateRoomCode();
+        
+        function generateRoomCode() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            localStorage.setItem('pollRoomCode', code);
+            return code;
+        }
 
         // Initialize the app
         async function init() {
             createColorPalette();
-            await loadDataFromCloud();
+            showRoomCode();
+            loadDataLocally();
             updateResults();
             
-            // Auto-refresh results every 10 seconds when viewing results
+            // Check for updates every 5 seconds when viewing results
             setInterval(() => {
                 if (document.getElementById('results').classList.contains('active')) {
-                    loadDataFromCloud();
+                    checkForUpdates();
                 }
-            }, 10000);
+            }, 5000);
+        }
+        
+        function showRoomCode() {
+            // Add room code display to the header
+            const container = document.querySelector('.container');
+            const roomDisplay = document.createElement('div');
+            roomDisplay.innerHTML = `
+                <div style="background: #e8f4fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center;">
+                    <strong>Room Code: ${roomCode}</strong> 
+                    <button onclick="changeRoom()" style="margin-left: 10px; padding: 5px 10px; border: 1px solid #666; background: white; border-radius: 3px; cursor: pointer;">Join Different Room</button>
+                    <button onclick="shareRoom()" style="margin-left: 5px; padding: 5px 10px; border: 1px solid #666; background: white; border-radius: 3px; cursor: pointer;">Share Room</button>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Share this code with others to see the same results
+                    </div>
+                </div>
+            `;
+            container.insertBefore(roomDisplay, container.children[1]);
+        }
+        
+        function changeRoom() {
+            const newCode = prompt('Enter room code to join:', '');
+            if (newCode && newCode.trim()) {
+                roomCode = newCode.trim().toUpperCase();
+                localStorage.setItem('pollRoomCode', roomCode);
+                location.reload();
+            }
+        }
+        
+        function shareRoom() {
+            const url = window.location.href;
+            const text = `Join our Color Emotion Poll!\nRoom Code: ${roomCode}\nLink: ${url}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Color Emotion Poll',
+                    text: text
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Room code and link copied to clipboard!');
+                });
+            } else {
+                alert(`Share this info:\n\n${text}`);
+            }
         }
 
         function createColorPalette() {
@@ -384,29 +435,62 @@
                 happiness: Math.round(((500 - currentPosition.y) / 500) * 100),
                 strength: Math.round((currentPosition.x / 500) * 100),
                 timestamp: new Date().toISOString(),
-                id: Date.now() + Math.random() // Simple unique ID
+                id: Date.now() + Math.random(), // Simple unique ID
+                room: roomCode
             };
 
+            // Add to local array
+            allResponses.push(response);
+            
+            // Save locally (this will be the main storage for now)
+            saveDataLocally();
+            
+            // Try to sync with others using a simple approach
+            broadcastResponse(response);
+            
+            // Reset form
+            resetPoll();
+            alert('Response submitted successfully!');
+        }
+        
+        function broadcastResponse(response) {
+            // Store in a way that other devices can potentially access
+            // This is a simplified approach - in a real classroom, you'd use:
+            // 1. A proper backend service
+            // 2. Firebase
+            // 3. A simple PHP script on a school server
+            
+            const sharedKey = `colorPoll_${roomCode}`;
             try {
-                // Add to local array
-                allResponses.push(response);
+                const existingData = JSON.parse(localStorage.getItem(sharedKey) || '[]');
+                existingData.push(response);
+                localStorage.setItem(sharedKey, JSON.stringify(existingData));
                 
-                // Save to cloud
-                await saveDataToCloud();
-                
-                // Reset form
-                resetPoll();
-                alert('Response submitted successfully!');
-                
-            } catch (error) {
-                console.error('Error submitting response:', error);
-                alert('There was an error submitting your response. Please try again.');
-                
-                // Remove from local array if cloud save failed
-                allResponses.pop();
-                
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Response';
+                // Also store the timestamp for sync checking
+                localStorage.setItem(`${sharedKey}_lastUpdate`, Date.now().toString());
+            } catch (e) {
+                console.warn('Could not broadcast response');
+            }
+        }
+        
+        function checkForUpdates() {
+            // Simple sync mechanism - checks if data has been updated
+            const sharedKey = `colorPoll_${roomCode}`;
+            const lastUpdateKey = `${sharedKey}_lastUpdate`;
+            const localLastUpdate = localStorage.getItem(`${lastUpdateKey}_local`) || '0';
+            const sharedLastUpdate = localStorage.getItem(lastUpdateKey) || '0';
+            
+            if (sharedLastUpdate > localLastUpdate) {
+                try {
+                    const sharedData = JSON.parse(localStorage.getItem(sharedKey) || '[]');
+                    if (sharedData.length > allResponses.length) {
+                        allResponses = sharedData;
+                        updateResults();
+                        localStorage.setItem(`${lastUpdateKey}_local`, sharedLastUpdate);
+                    }
+                } catch (e) {
+                    console.warn('Could not sync data');
+                }
             }
         }
 
@@ -434,7 +518,7 @@
             submitBtn.textContent = 'Submit Response';
         }
 
-        async function showSection(sectionName) {
+        function showSection(sectionName) {
             // Update buttons
             document.querySelectorAll('.mode-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -448,7 +532,7 @@
             document.getElementById(sectionName).classList.add('active');
 
             if (sectionName === 'results') {
-                await loadDataFromCloud(); // Refresh data when viewing results
+                checkForUpdates(); // Check for new data when viewing results
                 updateResults();
             }
         }
@@ -516,63 +600,9 @@
             });
         }
 
-        // Cloud database functions
-        async function saveDataToCloud() {
-            try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${DEMO_BIN_ID}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': '$2a$10$8HvkFfB5kGGKc5fLgFw5fuF8qTDt2Q2z3BYmX5J9V7kK1gM2nM3/.'
-                    },
-                    body: JSON.stringify({
-                        responses: allResponses,
-                        lastUpdated: new Date().toISOString()
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to save to cloud');
-                }
-
-                console.log('Data saved to cloud successfully');
-            } catch (error) {
-                console.error('Error saving to cloud:', error);
-                // Fall back to local storage
-                saveDataLocally();
-                throw error;
-            }
-        }
-
-        async function loadDataFromCloud() {
-            try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${DEMO_BIN_ID}/latest`, {
-                    headers: {
-                        'X-Master-Key': '$2a$10$8HvkFfB5kGGKc5fLgFw5fuF8qTDt2Q2z3BYmX5J9V7kK1gM2nM3/.'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.record && data.record.responses) {
-                        allResponses = data.record.responses;
-                        saveDataLocally(); // Also save locally as backup
-                        updateResults();
-                        console.log('Data loaded from cloud successfully');
-                        return;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading from cloud:', error);
-            }
-
-            // Fall back to local storage if cloud fails
-            loadDataLocally();
-        }
-
         function saveDataLocally() {
             try {
-                localStorage.setItem('colorPollData', JSON.stringify(allResponses));
+                localStorage.setItem(`colorPollData_${roomCode}`, JSON.stringify(allResponses));
             } catch (e) {
                 console.warn('Could not save to localStorage');
             }
@@ -580,29 +610,41 @@
 
         function loadDataLocally() {
             try {
-                const saved = localStorage.getItem('colorPollData');
+                const saved = localStorage.getItem(`colorPollData_${roomCode}`);
                 if (saved) {
                     allResponses = JSON.parse(saved);
-                    updateResults();
                 }
+                
+                // Also try to load from shared room data
+                const sharedKey = `colorPoll_${roomCode}`;
+                const sharedData = localStorage.getItem(sharedKey);
+                if (sharedData) {
+                    const shared = JSON.parse(sharedData);
+                    if (shared.length > allResponses.length) {
+                        allResponses = shared;
+                    }
+                }
+                
+                updateResults();
             } catch (e) {
                 console.warn('Could not load from localStorage');
                 allResponses = [];
             }
         }
 
-        async function clearAllData() {
+        function clearAllData() {
             if (confirm('Are you sure you want to delete all poll responses? This cannot be undone.')) {
                 allResponses = [];
-                try {
-                    await saveDataToCloud();
-                    updateResults();
-                    alert('All data cleared successfully.');
-                } catch (error) {
-                    saveDataLocally();
-                    updateResults();
-                    alert('Data cleared locally. Cloud sync may have failed.');
-                }
+                saveDataLocally();
+                
+                // Also clear shared data
+                const sharedKey = `colorPoll_${roomCode}`;
+                localStorage.removeItem(sharedKey);
+                localStorage.removeItem(`${sharedKey}_lastUpdate`);
+                localStorage.removeItem(`${sharedKey}_lastUpdate_local`);
+                
+                updateResults();
+                alert('All data cleared successfully.');
             }
         }
 

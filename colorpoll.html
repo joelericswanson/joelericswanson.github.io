@@ -224,6 +224,67 @@
             cursor: not-allowed;
         }
 
+        .admin-btn {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 0 10px;
+        }
+
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .admin-btn:nth-child(2) {
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        }
+
+        .average-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            z-index: 100;
+        }
+
+        .average-color {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 11px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+        .average-color::after {
+            content: 'AVG';
+            position: absolute;
+            bottom: -20px;
+            font-size: 8px;
+            background: #333;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
         .results-section {
             margin-top: 40px;
             padding: 30px;
@@ -311,6 +372,11 @@
                 </div>
 
                 <div class="plot-area" id="plotArea">
+                    <div class="average-overlay" id="averageOverlay">
+                        <div style="position: absolute; top: 10px; right: 10px;">
+                            <button onclick="hideAverages()" style="background: #FF6B6B; color: white; border: none; padding: 5px 10px; border-radius: 15px; cursor: pointer;">✕ Close</button>
+                        </div>
+                    </div>
                     <div class="grid-lines">
                         <div class="grid-line vertical"></div>
                         <div class="grid-line horizontal"></div>
@@ -325,6 +391,11 @@
             </div>
 
             <button class="submit-btn" id="submitBtn">Submit Survey Response</button>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="admin-btn" id="resetBtn">🗑️ Reset All Data</button>
+                <button class="admin-btn" id="showAveragesBtn">📊 Show Average Positions</button>
+            </div>
 
             <div id="message"></div>
 
@@ -369,6 +440,8 @@
             plotArea.addEventListener('drop', handleDrop);
 
             document.getElementById('submitBtn').addEventListener('click', submitResponse);
+            document.getElementById('resetBtn').addEventListener('click', resetAllData);
+            document.getElementById('showAveragesBtn').addEventListener('click', showAveragePositions);
 
             displayAllResponses();
         });
@@ -547,6 +620,89 @@
             });
 
             container.innerHTML = html;
+        }
+
+        function resetAllData() {
+            if (confirm('⚠️ Are you sure you want to delete ALL survey responses? This cannot be undone!')) {
+                localStorage.removeItem('colorSurveyResponses');
+                surveyResponses = [];
+                displayAllResponses();
+                showMessage('All survey data has been cleared successfully.', 'success');
+            }
+        }
+
+        function showAveragePositions() {
+            if (surveyResponses.length === 0) {
+                showMessage('No data available to calculate averages.', 'error');
+                return;
+            }
+
+            // Calculate averages for each color
+            const colorAverages = {};
+            const colorCounts = {};
+
+            // Initialize counters
+            Object.keys(colorStyles).forEach(color => {
+                colorAverages[color] = { x: 0, y: 0 };
+                colorCounts[color] = 0;
+            });
+
+            // Sum up all positions
+            surveyResponses.forEach(response => {
+                Object.entries(response.colorPlacements).forEach(([color, data]) => {
+                    colorAverages[color].x += data.x;
+                    colorAverages[color].y += data.y;
+                    colorCounts[color]++;
+                });
+            });
+
+            // Calculate averages
+            Object.keys(colorAverages).forEach(color => {
+                if (colorCounts[color] > 0) {
+                    colorAverages[color].x /= colorCounts[color];
+                    colorAverages[color].y /= colorCounts[color];
+                }
+            });
+
+            // Show overlay
+            const overlay = document.getElementById('averageOverlay');
+            const plotArea = document.getElementById('plotArea');
+            const plotRect = plotArea.getBoundingClientRect();
+
+            // Clear existing average colors
+            overlay.querySelectorAll('.average-color').forEach(el => el.remove());
+
+            // Add average positions
+            Object.entries(colorAverages).forEach(([color, avg]) => {
+                if (colorCounts[color] > 0) {
+                    const avgElement = document.createElement('div');
+                    avgElement.className = 'average-color';
+                    avgElement.style.backgroundColor = colorStyles[color];
+                    avgElement.style.left = (avg.x * plotRect.width) + 'px';
+                    avgElement.style.top = (avg.y * plotRect.height) + 'px';
+                    avgElement.textContent = color.charAt(0).toUpperCase();
+                    
+                    if (color === 'white') {
+                        avgElement.style.color = '#333';
+                        avgElement.style.border = '3px solid #666';
+                    }
+
+                    // Add count info
+                    avgElement.title = `${color}: Average of ${colorCounts[color]} responses`;
+
+                    overlay.appendChild(avgElement);
+                }
+            });
+
+            overlay.style.display = 'block';
+            
+            // Show summary
+            const totalPlacements = Object.values(colorCounts).reduce((a, b) => a + b, 0);
+            showMessage(`Showing average positions based on ${totalPlacements} total color placements from ${surveyResponses.length} responses.`, 'success');
+        }
+
+        function hideAverages() {
+            document.getElementById('averageOverlay').style.display = 'none';
         }
 
         // Admin function to clear all data (you can call this in browser console)

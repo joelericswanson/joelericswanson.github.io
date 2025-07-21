@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Emotion Survey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .student-info {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .student-info input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .student-info input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .survey-area {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .color-palette {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .color-palette h3 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .colors {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .color-item {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: grab;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .color-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .color-item:active {
+            cursor: grabbing;
+        }
+
+        .plot-area {
+            position: relative;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            height: 500px;
+        }
+
+        .axis-labels {
+            position: absolute;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .x-label-left {
+            bottom: 10px;
+            left: 10px;
+        }
+
+        .x-label-right {
+            bottom: 10px;
+            right: 10px;
+        }
+
+        .y-label-top {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .y-label-bottom {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .grid-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .grid-line {
+            position: absolute;
+            background: #e0e0e0;
+        }
+
+        .grid-line.vertical {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+        }
+
+        .grid-line.horizontal {
+            height: 1px;
+            width: 100%;
+            top: 50%;
+        }
+
+        .placed-color {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.7);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .results-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .response-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .survey-area {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .colors {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .color-item {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Color Emotion Survey</h1>
+            <p>Drag colors to show how they make you feel: Weak ↔ Strong, Happy ↔ Sad</p>
+        </div>
+
+        <div class="content">
+            <div class="student-info">
+                <input type="text" id="studentName" placeholder="Enter your name" required>
+                <input type="email" id="studentEmail" placeholder="Enter your email (optional)">
+            </div>
+
+            <div class="survey-area">
+                <div class="color-palette">
+                    <h3>Colors to Place</h3>
+                    <div class="colors">
+                        <div class="color-item" draggable="true" data-color="red" style="background-color: #FF4444;">Red</div>
+                        <div class="color-item" draggable="true" data-color="blue" style="background-color: #4444FF;">Blue</div>
+                        <div class="color-item" draggable="true" data-color="green" style="background-color: #44AA44;">Green</div>
+                        <div class="color-item" draggable="true" data-color="yellow" style="background-color: #FFDD44; color: #333;">Yellow</div>
+                        <div class="color-item" draggable="true" data-color="orange" style="background-color: #FF8844;">Orange</div>
+                        <div class="color-item" draggable="true" data-color="purple" style="background-color: #AA44AA;">Purple</div>
+                        <div class="color-item" draggable="true" data-color="pink" style="background-color: #FF88AA;">Pink</div>
+                        <div class="color-item" draggable="true" data-color="black" style="background-color: #333333;">Black</div>
+                        <div class="color-item" draggable="true" data-color="white" style="background-color: #FFFFFF; color: #333; border-color: #ccc;">White</div>
+                        <div class="color-item" draggable="true" data-color="brown" style="background-color: #8B4513;">Brown</div>
+                    </div>
+                </div>
+
+                <div class="plot-area" id="plotArea">
+                    <div class="grid-lines">
+                        <div class="grid-line vertical"></div>
+                        <div class="grid-line horizontal"></div>
+                    </div>
+                    <div class="axis-labels">
+                        <div class="x-label-left">Weak</div>
+                        <div class="x-label-right">Strong</div>
+                        <div class="y-label-top">Happy</div>
+                        <div class="y-label-bottom">Sad</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="submit-btn" id="submitBtn">Submit Survey Response</button>
+
+            <div id="message"></div>
+
+            <div class="results-section">
+                <h3>📊 All Survey Responses</h3>
+                <div id="allResponses">
+                    <p>Survey responses will appear here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Survey data storage
+        let surveyResponses = JSON.parse(localStorage.getItem('colorSurveyResponses') || '[]');
+        let placedColors = {};
+
+        // Color mapping for display
+        const colorStyles = {
+            red: '#FF4444',
+            blue: '#4444FF', 
+            green: '#44AA44',
+            yellow: '#FFDD44',
+            orange: '#FF8844',
+            purple: '#AA44AA',
+            pink: '#FF88AA',
+            black: '#333333',
+            white: '#FFFFFF',
+            brown: '#8B4513'
+        };
+
+        // Initialize drag and drop
+        document.addEventListener('DOMContentLoaded', function() {
+            const colorItems = document.querySelectorAll('.color-item');
+            const plotArea = document.getElementById('plotArea');
+
+            colorItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+            });
+
+            plotArea.addEventListener('dragover', handleDragOver);
+            plotArea.addEventListener('drop', handleDrop);
+
+            document.getElementById('submitBtn').addEventListener('click', submitResponse);
+
+            displayAllResponses();
+        });
+
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.color);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const color = e.dataTransfer.getData('text/plain');
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            placeColor(color, x, y);
+        }
+
+        function placeColor(color, x, y) {
+            // Remove existing placement of this color
+            const existing = document.querySelector(`.placed-color[data-color="${color}"]`);
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create new color placement
+            const colorElement = document.createElement('div');
+            colorElement.className = 'placed-color';
+            colorElement.dataset.color = color;
+            colorElement.style.backgroundColor = colorStyles[color];
+            colorElement.style.left = x + 'px';
+            colorElement.style.top = y + 'px';
+            colorElement.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+            
+            if (color === 'white') {
+                colorElement.style.color = '#333';
+                colorElement.style.border = '2px solid #ccc';
+            }
+
+            // Make it draggable within the plot area
+            colorElement.addEventListener('mousedown', function(e) {
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startLeft = parseInt(colorElement.style.left);
+                const startTop = parseInt(colorElement.style.top);
+
+                function handleMouseMove(e) {
+                    const newX = startLeft + (e.clientX - startX);
+                    const newY = startTop + (e.clientY - startY);
+                    
+                    const plotRect = document.getElementById('plotArea').getBoundingClientRect();
+                    const boundedX = Math.max(20, Math.min(newX, plotRect.width - 20));
+                    const boundedY = Math.max(20, Math.min(newY, plotRect.height - 20));
+                    
+                    colorElement.style.left = boundedX + 'px';
+                    colorElement.style.top = boundedY + 'px';
+                }
+
+                function handleMouseUp() {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                    
+                    // Update stored position
+                    const plotRect = document.getElementById('plotArea').getBoundingClientRect();
+                    const normalizedX = parseInt(colorElement.style.left) / plotRect.width;
+                    const normalizedY = parseInt(colorElement.style.top) / plotRect.height;
+                    placedColors[color] = { x: normalizedX, y: normalizedY };
+                }
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+
+            document.getElementById('plotArea').appendChild(colorElement);
+
+            // Store normalized coordinates (0-1 scale)
+            const plotRect = document.getElementById('plotArea').getBoundingClientRect();
+            const normalizedX = x / plotRect.width;
+            const normalizedY = y / plotRect.height;
+            placedColors[color] = { x: normalizedX, y: normalizedY };
+        }
+
+        function submitResponse() {
+            const name = document.getElementById('studentName').value.trim();
+            const email = document.getElementById('studentEmail').value.trim();
+
+            if (!name) {
+                showMessage('Please enter your name.', 'error');
+                return;
+            }
+
+            if (Object.keys(placedColors).length === 0) {
+                showMessage('Please place at least one color on the chart.', 'error');
+                return;
+            }
+
+            // Convert coordinates to emotion scores
+            const emotionData = {};
+            Object.entries(placedColors).forEach(([color, pos]) => {
+                emotionData[color] = {
+                    strength: pos.x, // 0 = weak, 1 = strong
+                    happiness: 1 - pos.y, // 0 = sad, 1 = happy (flip Y axis)
+                    x: pos.x,
+                    y: pos.y
+                };
+            });
+
+            const response = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString(),
+                name: name,
+                email: email,
+                colorPlacements: emotionData,
+                totalColors: Object.keys(placedColors).length
+            };
+
+            // Store response
+            surveyResponses.unshift(response);
+            localStorage.setItem('colorSurveyResponses', JSON.stringify(surveyResponses));
+
+            showMessage('Thank you! Your response has been recorded.', 'success');
+
+            // Reset form
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentEmail').value = '';
+            placedColors = {};
+            document.querySelectorAll('.placed-color').forEach(el => el.remove());
+
+            displayAllResponses();
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function displayAllResponses() {
+            const container = document.getElementById('allResponses');
+            
+            if (surveyResponses.length === 0) {
+                container.innerHTML = '<p>No survey responses yet.</p>';
+                return;
+            }
+
+            let html = `<p><strong>Total Responses: ${surveyResponses.length}</strong></p>`;
+            
+            surveyResponses.forEach(response => {
+                html += `
+                    <div class="response-item">
+                        <strong>${response.name}</strong> 
+                        ${response.email ? `(${response.email})` : ''}
+                        <br>
+                        <small>Submitted: ${response.timestamp} | Colors placed: ${response.totalColors}</small>
+                        <br>
+                        <div style="margin-top: 10px;">
+                `;
+                
+                Object.entries(response.colorPlacements).forEach(([color, data]) => {
+                    const strengthText = data.strength > 0.5 ? 'Strong' : 'Weak';
+                    const happinessText = data.happiness > 0.5 ? 'Happy' : 'Sad';
+                    html += `
+                        <span style="display: inline-block; margin: 2px 5px; padding: 3px 8px; background: ${colorStyles[color]}; color: ${color === 'white' ? '#333' : 'white'}; border-radius: 10px; font-size: 12px;">
+                            ${color}: ${strengthText}, ${happinessText}
+                        </span>
+                    `;
+                });
+                
+                html += '</div></div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Admin function to clear all data (you can call this in browser console)
+        function clearAllResponses() {
+            if (confirm('Are you sure you want to delete all survey responses? This cannot be undone.')) {
+                localStorage.removeItem('colorSurveyResponses');
+                surveyResponses = [];
+                displayAllResponses();
+                showMessage('All responses cleared.', 'success');
+            }
+        }
+
+        // Admin function to export data (you can call this in browser console)
+        function exportResponses() {
+            const dataStr = JSON.stringify(surveyResponses, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'color-survey-responses.json';
+            link.click();
+        }
+    </script>
+</body>
+</html>

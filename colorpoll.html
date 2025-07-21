@@ -159,28 +159,31 @@
             position: absolute;
             font-weight: bold;
             color: #666;
-        }
-
-        .x-label-left {
-            bottom: 10px;
-            left: 10px;
-        }
-
-        .x-label-right {
-            bottom: 10px;
-            right: 10px;
+            font-size: 16px;
         }
 
         .y-label-top {
-            top: 10px;
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
         }
 
         .y-label-bottom {
-            bottom: 10px;
+            bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
+        }
+
+        .y-label-left {
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+        }
+
+        .y-label-right {
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
         }
 
         .grid-lines {
@@ -381,23 +384,22 @@
 
             <div class="student-info">
                 <input type="text" id="studentName" placeholder="Enter your name" required>
-                <input type="email" id="studentEmail" placeholder="Enter your email (optional)">
             </div>
 
             <div class="survey-area">
                 <div class="color-palette">
                     <h3>Colors to Place</h3>
                     <div class="colors">
-                        <div class="color-item" draggable="true" data-color="red" style="background-color: #FF4444;">Red</div>
-                        <div class="color-item" draggable="true" data-color="blue" style="background-color: #4444FF;">Blue</div>
-                        <div class="color-item" draggable="true" data-color="green" style="background-color: #44AA44;">Green</div>
-                        <div class="color-item" draggable="true" data-color="yellow" style="background-color: #FFDD44; color: #333;">Yellow</div>
-                        <div class="color-item" draggable="true" data-color="orange" style="background-color: #FF8844;">Orange</div>
-                        <div class="color-item" draggable="true" data-color="purple" style="background-color: #AA44AA;">Purple</div>
-                        <div class="color-item" draggable="true" data-color="pink" style="background-color: #FF88AA;">Pink</div>
-                        <div class="color-item" draggable="true" data-color="black" style="background-color: #333333;">Black</div>
-                        <div class="color-item" draggable="true" data-color="white" style="background-color: #FFFFFF; color: #333; border-color: #ccc;">White</div>
-                        <div class="color-item" draggable="true" data-color="brown" style="background-color: #8B4513;">Brown</div>
+                        <div class="color-item" draggable="true" data-color="red" style="background-color: #FF4444;"></div>
+                        <div class="color-item" draggable="true" data-color="blue" style="background-color: #4444FF;"></div>
+                        <div class="color-item" draggable="true" data-color="green" style="background-color: #44AA44;"></div>
+                        <div class="color-item" draggable="true" data-color="yellow" style="background-color: #FFDD44;"></div>
+                        <div class="color-item" draggable="true" data-color="orange" style="background-color: #FF8844;"></div>
+                        <div class="color-item" draggable="true" data-color="purple" style="background-color: #AA44AA;"></div>
+                        <div class="color-item" draggable="true" data-color="pink" style="background-color: #FF88AA;"></div>
+                        <div class="color-item" draggable="true" data-color="black" style="background-color: #333333;"></div>
+                        <div class="color-item" draggable="true" data-color="white" style="background-color: #FFFFFF; border-color: #ccc;"></div>
+                        <div class="color-item" draggable="true" data-color="brown" style="background-color: #8B4513;"></div>
                     </div>
                 </div>
 
@@ -412,10 +414,10 @@
                         <div class="grid-line horizontal"></div>
                     </div>
                     <div class="axis-labels">
-                        <div class="x-label-left">Weak</div>
-                        <div class="x-label-right">Strong</div>
                         <div class="y-label-top">Happy</div>
                         <div class="y-label-bottom">Sad</div>
+                        <div class="y-label-left">Weak</div>
+                        <div class="y-label-right">Strong</div>
                     </div>
                 </div>
             </div>
@@ -423,7 +425,6 @@
             <button class="submit-btn" id="submitBtn" disabled>Submit Survey Response</button>
 
             <div style="text-align: center; margin-top: 20px;">
-                <button class="admin-btn" id="resetBtn" disabled>🗑️ Reset All Data</button>
                 <button class="admin-btn" id="showAveragesBtn" disabled>📊 Show Average Positions</button>
             </div>
 
@@ -433,6 +434,11 @@
                 <h3>📊 All Survey Responses (<span id="responseCount">0</span> total)</h3>
                 <div id="allResponses">
                     <p>Loading responses...</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
+                    <button class="admin-btn" id="resetBtn" disabled>🗑️ Reset All Data</button>
+                    <p style="margin-top: 10px; color: #666; font-size: 14px;">⚠️ Instructor only - This will delete all student responses</p>
                 </div>
             </div>
         </div>
@@ -455,7 +461,6 @@
   appId: "1:194881039263:web:760ce538d1ca21df3e2baa",
   measurementId: "G-CR8P5GD60Q"
 };
-
 
         // Initialize Firebase
         let db = null;
@@ -591,10 +596,9 @@
             colorElement.style.backgroundColor = colorStyles[color];
             colorElement.style.left = x + 'px';
             colorElement.style.top = y + 'px';
-            colorElement.textContent = color.charAt(0).toUpperCase() + color.slice(1);
+            colorElement.textContent = '';
             
             if (color === 'white') {
-                colorElement.style.color = '#333';
                 colorElement.style.border = '2px solid #ccc';
             }
 
@@ -648,7 +652,6 @@
             }
 
             const name = document.getElementById('studentName').value.trim();
-            const email = document.getElementById('studentEmail').value.trim();
 
             if (!name) {
                 showMessage('Please enter your name.', 'error');
@@ -671,7 +674,7 @@
                 Object.entries(placedColors).forEach(([color, pos]) => {
                     emotionData[color] = {
                         strength: pos.x, // 0 = weak, 1 = strong
-                        happiness: 1 - pos.y, // 0 = sad, 1 = happy (flip Y axis)
+                        happiness: 1 - pos.y, // 0 = sad, 1 = happy (flip Y since top=happy)
                         x: pos.x,
                         y: pos.y
                     };
@@ -681,7 +684,6 @@
                     timestamp: new Date().toLocaleString(),
                     timestamp_numeric: Date.now(),
                     name: name,
-                    email: email,
                     colorPlacements: emotionData,
                     totalColors: Object.keys(placedColors).length
                 };
@@ -694,7 +696,6 @@
 
                 // Reset form
                 document.getElementById('studentName').value = '';
-                document.getElementById('studentEmail').value = '';
                 placedColors = {};
                 document.querySelectorAll('.placed-color').forEach(el => el.remove());
 
@@ -776,10 +777,9 @@
                     avgElement.style.backgroundColor = colorStyles[color];
                     avgElement.style.left = (avg.x * plotRect.width) + 'px';
                     avgElement.style.top = (avg.y * plotRect.height) + 'px';
-                    avgElement.textContent = color.charAt(0).toUpperCase();
+                    avgElement.textContent = '';
                     
                     if (color === 'white') {
-                        avgElement.style.color = '#333';
                         avgElement.style.border = '3px solid #666';
                     }
 
@@ -825,8 +825,7 @@
             surveyResponses.forEach(response => {
                 html += `
                     <div class="response-item">
-                        <strong>${response.name}</strong> 
-                        ${response.email ? `(${response.email})` : ''}
+                        <strong>${response.name}</strong>
                         <br>
                         <small>Submitted: ${response.timestamp} | Colors placed: ${response.totalColors}</small>
                         <br>

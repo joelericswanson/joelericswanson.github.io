@@ -157,33 +157,51 @@
 
         .axis-labels {
             position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .y-label-top {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
             font-weight: bold;
             color: #666;
             font-size: 16px;
         }
 
-        .y-label-top {
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
         .y-label-bottom {
+            position: absolute;
             bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
+            font-weight: bold;
+            color: #666;
+            font-size: 16px;
         }
 
         .y-label-left {
+            position: absolute;
             top: 50%;
             left: 15px;
             transform: translateY(-50%);
+            font-weight: bold;
+            color: #666;
+            font-size: 16px;
         }
 
         .y-label-right {
+            position: absolute;
             top: 50%;
             right: 15px;
             transform: translateY(-50%);
+            font-weight: bold;
+            color: #666;
+            font-size: 16px;
         }
 
         .grid-lines {
@@ -451,7 +469,7 @@
     <script>
         // 🔥 FIREBASE CONFIGURATION
         // ⚠️ REPLACE THESE VALUES WITH YOUR FIREBASE PROJECT SETTINGS
-       const firebaseConfig = {
+          const firebaseConfig = {
   apiKey: "AIzaSyAbBsUZv_d_CEyKqF2AfWapMt8HRrOqjhw",
   authDomain: "colorpoll-8f40c.firebaseapp.com",
   databaseURL: "https://colorpoll-8f40c-default-rtdb.firebaseio.com",
@@ -461,6 +479,8 @@
   appId: "1:194881039263:web:760ce538d1ca21df3e2baa",
   measurementId: "G-CR8P5GD60Q"
 };
+
+
 
         // Initialize Firebase
         let db = null;

@@ -48,6 +48,31 @@
             padding: 40px;
         }
 
+        .firebase-status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .firebase-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .firebase-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .firebase-status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
         .student-info {
             margin-bottom: 30px;
             padding: 20px;
@@ -349,6 +374,10 @@
         </div>
 
         <div class="content">
+            <div id="firebaseStatus" class="firebase-status loading">
+                🔄 Connecting to database...
+            </div>
+
             <div class="student-info">
                 <input type="text" id="studentName" placeholder="Enter your name" required>
                 <input type="email" id="studentEmail" placeholder="Enter your email (optional)">
@@ -390,28 +419,46 @@
                 </div>
             </div>
 
-            <button class="submit-btn" id="submitBtn">Submit Survey Response</button>
+            <button class="submit-btn" id="submitBtn" disabled>Submit Survey Response</button>
 
             <div style="text-align: center; margin-top: 20px;">
-                <button class="admin-btn" id="resetBtn">🗑️ Reset All Data</button>
-                <button class="admin-btn" id="showAveragesBtn">📊 Show Average Positions</button>
+                <button class="admin-btn" id="resetBtn" disabled>🗑️ Reset All Data</button>
+                <button class="admin-btn" id="showAveragesBtn" disabled>📊 Show Average Positions</button>
             </div>
 
             <div id="message"></div>
 
             <div class="results-section">
-                <h3>📊 All Survey Responses</h3>
+                <h3>📊 All Survey Responses (<span id="responseCount">0</span> total)</h3>
                 <div id="allResponses">
-                    <p>Survey responses will appear here...</p>
+                    <p>Loading responses...</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
     <script>
-        // Survey data storage
-        let surveyResponses = JSON.parse(localStorage.getItem('colorSurveyResponses') || '[]');
+        // 🔥 FIREBASE CONFIGURATION
+        // ⚠️ REPLACE THESE VALUES WITH YOUR FIREBASE PROJECT SETTINGS
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY_HERE",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com/",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        let db = null;
+        let surveyResponses = [];
         let placedColors = {};
+        let firebaseConnected = false;
 
         // Color mapping for display
         const colorStyles = {
@@ -427,8 +474,71 @@
             brown: '#8B4513'
         };
 
-        // Initialize drag and drop
+        // Initialize Firebase and UI
         document.addEventListener('DOMContentLoaded', function() {
+            initializeFirebase();
+            setupDragAndDrop();
+            setupEventListeners();
+        });
+
+        function initializeFirebase() {
+            try {
+                // Check if config is still default
+                if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
+                    updateFirebaseStatus('error', '❌ Firebase not configured. Please add your Firebase settings to the code.');
+                    return;
+                }
+
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                
+                updateFirebaseStatus('loading', '🔄 Connecting to Firebase...');
+
+                // Test connection and load data
+                loadAllResponses();
+                
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                updateFirebaseStatus('error', `❌ Firebase connection failed: ${error.message}`);
+            }
+        }
+
+        function updateFirebaseStatus(type, message) {
+            const statusDiv = document.getElementById('firebaseStatus');
+            statusDiv.className = `firebase-status ${type}`;
+            statusDiv.textContent = message;
+            
+            const buttonsDisabled = (type === 'loading' || type === 'error');
+            document.getElementById('submitBtn').disabled = buttonsDisabled;
+            document.getElementById('resetBtn').disabled = buttonsDisabled;
+            document.getElementById('showAveragesBtn').disabled = buttonsDisabled;
+        }
+
+        function loadAllResponses() {
+            if (!db) return;
+
+            const responsesRef = db.ref('survey-responses');
+            
+            responsesRef.on('value', (snapshot) => {
+                try {
+                    const data = snapshot.val();
+                    surveyResponses = data ? Object.values(data).sort((a, b) => b.timestamp_numeric - a.timestamp_numeric) : [];
+                    
+                    updateFirebaseStatus('connected', `✅ Connected! Real-time database active (${surveyResponses.length} responses)`);
+                    firebaseConnected = true;
+                    
+                    displayAllResponses();
+                } catch (error) {
+                    console.error('Error loading responses:', error);
+                    updateFirebaseStatus('error', `❌ Error loading data: ${error.message}`);
+                }
+            }, (error) => {
+                console.error('Firebase read error:', error);
+                updateFirebaseStatus('error', `❌ Database read error: ${error.message}`);
+            });
+        }
+
+        function setupDragAndDrop() {
             const colorItems = document.querySelectorAll('.color-item');
             const plotArea = document.getElementById('plotArea');
 
@@ -438,13 +548,13 @@
 
             plotArea.addEventListener('dragover', handleDragOver);
             plotArea.addEventListener('drop', handleDrop);
+        }
 
+        function setupEventListeners() {
             document.getElementById('submitBtn').addEventListener('click', submitResponse);
             document.getElementById('resetBtn').addEventListener('click', resetAllData);
             document.getElementById('showAveragesBtn').addEventListener('click', showAveragePositions);
-
-            displayAllResponses();
-        });
+        }
 
         function handleDragStart(e) {
             e.dataTransfer.setData('text/plain', e.target.dataset.color);
@@ -528,7 +638,12 @@
             placedColors[color] = { x: normalizedX, y: normalizedY };
         }
 
-        function submitResponse() {
+        async function submitResponse() {
+            if (!firebaseConnected) {
+                showMessage('Database not connected. Please wait for connection.', 'error');
+                return;
+            }
+
             const name = document.getElementById('studentName').value.trim();
             const email = document.getElementById('studentEmail').value.trim();
 
@@ -542,92 +657,68 @@
                 return;
             }
 
-            // Convert coordinates to emotion scores
-            const emotionData = {};
-            Object.entries(placedColors).forEach(([color, pos]) => {
-                emotionData[color] = {
-                    strength: pos.x, // 0 = weak, 1 = strong
-                    happiness: 1 - pos.y, // 0 = sad, 1 = happy (flip Y axis)
-                    x: pos.x,
-                    y: pos.y
+            // Disable submit button while processing
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                // Convert coordinates to emotion scores
+                const emotionData = {};
+                Object.entries(placedColors).forEach(([color, pos]) => {
+                    emotionData[color] = {
+                        strength: pos.x, // 0 = weak, 1 = strong
+                        happiness: 1 - pos.y, // 0 = sad, 1 = happy (flip Y axis)
+                        x: pos.x,
+                        y: pos.y
+                    };
+                });
+
+                const response = {
+                    timestamp: new Date().toLocaleString(),
+                    timestamp_numeric: Date.now(),
+                    name: name,
+                    email: email,
+                    colorPlacements: emotionData,
+                    totalColors: Object.keys(placedColors).length
                 };
-            });
 
-            const response = {
-                id: Date.now(),
-                timestamp: new Date().toLocaleString(),
-                name: name,
-                email: email,
-                colorPlacements: emotionData,
-                totalColors: Object.keys(placedColors).length
-            };
+                // Save to Firebase
+                const newResponseRef = db.ref('survey-responses').push();
+                await newResponseRef.set(response);
 
-            // Store response
-            surveyResponses.unshift(response);
-            localStorage.setItem('colorSurveyResponses', JSON.stringify(surveyResponses));
+                showMessage('Thank you! Your response has been recorded and is now visible to everyone.', 'success');
 
-            showMessage('Thank you! Your response has been recorded.', 'success');
+                // Reset form
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentEmail').value = '';
+                placedColors = {};
+                document.querySelectorAll('.placed-color').forEach(el => el.remove());
 
-            // Reset form
-            document.getElementById('studentName').value = '';
-            document.getElementById('studentEmail').value = '';
-            placedColors = {};
-            document.querySelectorAll('.placed-color').forEach(el => el.remove());
-
-            displayAllResponses();
+            } catch (error) {
+                console.error('Error saving response:', error);
+                showMessage('Error saving response. Please try again.', 'error');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Survey Response';
+            }
         }
 
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
-            setTimeout(() => {
-                messageDiv.innerHTML = '';
-            }, 5000);
-        }
-
-        function displayAllResponses() {
-            const container = document.getElementById('allResponses');
-            
-            if (surveyResponses.length === 0) {
-                container.innerHTML = '<p>No survey responses yet.</p>';
+        async function resetAllData() {
+            if (!firebaseConnected) {
+                showMessage('Database not connected.', 'error');
                 return;
             }
 
-            let html = `<p><strong>Total Responses: ${surveyResponses.length}</strong></p>`;
-            
-            surveyResponses.forEach(response => {
-                html += `
-                    <div class="response-item">
-                        <strong>${response.name}</strong> 
-                        ${response.email ? `(${response.email})` : ''}
-                        <br>
-                        <small>Submitted: ${response.timestamp} | Colors placed: ${response.totalColors}</small>
-                        <br>
-                        <div style="margin-top: 10px;">
-                `;
-                
-                Object.entries(response.colorPlacements).forEach(([color, data]) => {
-                    const strengthText = data.strength > 0.5 ? 'Strong' : 'Weak';
-                    const happinessText = data.happiness > 0.5 ? 'Happy' : 'Sad';
-                    html += `
-                        <span style="display: inline-block; margin: 2px 5px; padding: 3px 8px; background: ${colorStyles[color]}; color: ${color === 'white' ? '#333' : 'white'}; border-radius: 10px; font-size: 12px;">
-                            ${color}: ${strengthText}, ${happinessText}
-                        </span>
-                    `;
-                });
-                
-                html += '</div></div>';
-            });
-
-            container.innerHTML = html;
-        }
-
-        function resetAllData() {
             if (confirm('⚠️ Are you sure you want to delete ALL survey responses? This cannot be undone!')) {
-                localStorage.removeItem('colorSurveyResponses');
-                surveyResponses = [];
-                displayAllResponses();
-                showMessage('All survey data has been cleared successfully.', 'success');
+                try {
+                    await db.ref('survey-responses').remove();
+                    showMessage('All survey data has been cleared successfully.', 'success');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    showMessage('Error clearing data. Please try again.', 'error');
+                }
             }
         }
 
@@ -649,11 +740,13 @@
 
             // Sum up all positions
             surveyResponses.forEach(response => {
-                Object.entries(response.colorPlacements).forEach(([color, data]) => {
-                    colorAverages[color].x += data.x;
-                    colorAverages[color].y += data.y;
-                    colorCounts[color]++;
-                });
+                if (response.colorPlacements) {
+                    Object.entries(response.colorPlacements).forEach(([color, data]) => {
+                        colorAverages[color].x += data.x;
+                        colorAverages[color].y += data.y;
+                        colorCounts[color]++;
+                    });
+                }
             });
 
             // Calculate averages
@@ -705,25 +798,54 @@
             document.getElementById('averageOverlay').style.display = 'none';
         }
 
-        // Admin function to clear all data (you can call this in browser console)
-        function clearAllResponses() {
-            if (confirm('Are you sure you want to delete all survey responses? This cannot be undone.')) {
-                localStorage.removeItem('colorSurveyResponses');
-                surveyResponses = [];
-                displayAllResponses();
-                showMessage('All responses cleared.', 'success');
-            }
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
         }
 
-        // Admin function to export data (you can call this in browser console)
-        function exportResponses() {
-            const dataStr = JSON.stringify(surveyResponses, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'color-survey-responses.json';
-            link.click();
+        function displayAllResponses() {
+            const container = document.getElementById('allResponses');
+            const countElement = document.getElementById('responseCount');
+            
+            countElement.textContent = surveyResponses.length;
+            
+            if (surveyResponses.length === 0) {
+                container.innerHTML = '<p>No survey responses yet. Submit the first one!</p>';
+                return;
+            }
+
+            let html = '';
+            
+            surveyResponses.forEach(response => {
+                html += `
+                    <div class="response-item">
+                        <strong>${response.name}</strong> 
+                        ${response.email ? `(${response.email})` : ''}
+                        <br>
+                        <small>Submitted: ${response.timestamp} | Colors placed: ${response.totalColors}</small>
+                        <br>
+                        <div style="margin-top: 10px;">
+                `;
+                
+                if (response.colorPlacements) {
+                    Object.entries(response.colorPlacements).forEach(([color, data]) => {
+                        const strengthText = data.strength > 0.5 ? 'Strong' : 'Weak';
+                        const happinessText = data.happiness > 0.5 ? 'Happy' : 'Sad';
+                        html += `
+                            <span style="display: inline-block; margin: 2px 5px; padding: 3px 8px; background: ${colorStyles[color]}; color: ${color === 'white' ? '#333' : 'white'}; border-radius: 10px; font-size: 12px;">
+                                ${color}: ${strengthText}, ${happinessText}
+                            </span>
+                        `;
+                    });
+                }
+                
+                html += '</div></div>';
+            });
+
+            container.innerHTML = html;
         }
     </script>
 </body>

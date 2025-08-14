@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Use vs Sentiment Poll</title>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+        // Your Firebase config (replace with your actual config)
+        const firebaseConfig = {
+          apiKey: "AIzaSyBy8hiDvyNj-UyYzsNXtpmrGtdpzDQAFVk",
+authDomain: "ai-sentiment-poll.firebaseapp.com",
+projectId: "ai-sentiment-poll",
+storageBucket: "ai-sentiment-poll.firebasestorage.app",
+messagingSenderId: "2785699686",
+appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make Firebase available globally
+        window.firebase = { db, collection, addDoc, onSnapshot, serverTimestamp };
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: white;
+            min-height: 100vh;
+            padding: 20px;
+            color: black;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            margin-bottom: 40px;
+            font-size: 1em;
+            font-weight: 400;
+            color: #666;
+        }
+
+        .poll-container {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 40px;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: #f5f5f5;
+            padding: 20px;
+            margin-bottom: 40px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+            font-size: 14px;
+            color: black;
+        }
+
+        .chart-layout {
+            display: grid;
+            grid-template-columns: 80px 1fr 80px;
+            grid-template-rows: 40px 1fr 40px;
+            gap: 10px;
+            max-width: 600px;
+            margin: 40px auto;
+            height: 600px;
+        }
+
+        .y-axis-title {
+            grid-column: 1;
+            grid-row: 2;
+            writing-mode: vertical-lr;
+            text-orientation: mixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 400;
+            transform: rotate(180deg);
+        }
+
+        .x-axis-title {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 400;
+        }
+
+        .top-label {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+        }
+
+        .left-label {
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+        }
+
+        .right-label {
+            grid-column: 3;
+            grid-row: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+        }
+
+        .bottom-label {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+            padding-top: 35px;
+        }
+
+        .grid-container {
+            grid-column: 2;
+            grid-row: 2;
+            position: relative;
+            border: 2px solid black;
+            background: white;
+            cursor: crosshair;
+        }
+
+        .grid-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .grid-line {
+            position: absolute;
+            background: #ccc;
+        }
+
+        .grid-line.vertical {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+        }
+
+        .grid-line.horizontal {
+            height: 1px;
+            width: 100%;
+            top: 50%;
+        }
+
+        .marker {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: black;
+            transform: translate(-50%, -50%);
+            transition: all 0.2s ease;
+        }
+
+        .marker.own {
+            background: black;
+            width: 12px;
+            height: 12px;
+            z-index: 100;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px black;
+        }
+
+        .marker.other {
+            background: #666;
+        }
+
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+
+        .controls {
+            margin: 20px 0 40px 0;
+            text-align: center;
+        }
+
+        .controls button {
+            display: inline-block;
+            margin: 5px 10px;
+        }
+
+        button {
+            background: black;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1px;
+            margin-top: 40px;
+            text-align: left;
+            color: black;
+            border: 1px solid black;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-right: 1px solid black;
+            border-bottom: 1px solid black;
+        }
+
+        .stat-card:last-child {
+            border-right: none;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 300;
+            color: black;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+        }
+
+        .status-indicator {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .poll-container {
+                padding: 20px;
+            }
+
+            .chart-layout {
+                height: 500px;
+                max-width: 500px;
+                grid-template-columns: 60px 1fr 60px;
+                grid-template-rows: 30px 1fr 30px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                margin: 15px 0 30px 0;
+            }
+
+            .controls button {
+                display: block;
+                width: 80%;
+                margin: 8px auto;
+                padding: 12px 16px;
+                font-size: 12px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                margin-top: 30px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chart-layout {
+                height: 400px;
+                max-width: 400px;
+                grid-template-columns: 50px 1fr 50px;
+                grid-template-rows: 25px 1fr 25px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .controls button {
+                width: 100%;
+                font-size: 11px;
+            }
+
+            .y-axis-title, .x-axis-title {
+                font-size: 12px;
+            }
+
+            .top-label, .left-label, .right-label, .bottom-label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Use vs Sentiment Poll</h1>
+        <p class="subtitle">Place your marker to show where you stand</p>
+
+        <div id="statusIndicator" class="status-indicator status-disconnected">
+            Connecting to Firebase...
+        </div>
+
+        <div class="instructions">
+            <strong>Instructions:</strong> Click anywhere on the grid to place your marker. The vertical axis represents your AI use level (high to low), and the horizontal axis represents how you feel about AI (negative to positive). Your response will be saved to the cloud and you'll see real-time updates from other users!
+        </div>
+
+        <div class="poll-container">
+            <div class="chart-layout">
+                <div class="top-label">High Use</div>
+                <div class="left-label">Feeling Negative</div>
+                <div class="right-label">Feeling Positive</div>
+                <div class="bottom-label">Low Use</div>
+
+                <div class="grid-container" id="grid">
+                    <div class="grid-lines">
+                        <div class="grid-line vertical"></div>
+                        <div class="grid-line horizontal"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="submitBtn" disabled>Submit My Response</button>
+                <button id="clearBtn">Clear My Marker</button>
+                <button id="toggleResults">Hide Results</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalResponses">0</div>
+                    <div class="stat-label">Total Responses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgSentiment">N/A</div>
+                    <div class="stat-label">Avg. AI Sentiment</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgUsage">N/A</div>
+                    <div class="stat-label">Avg. AI Usage</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="myPosition">Not placed</div>
+                    <div class="stat-label">Your Position</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PollApp {
+            constructor() {
+                this.grid = document.getElementById('grid');
+                this.submitBtn = document.getElementById('submitBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.toggleBtn = document.getElementById('toggleResults');
+                this.statusIndicator = document.getElementById('statusIndicator');
+
+                this.userMarker = null;
+                this.userPosition = null;
+                this.showingResults = true;
+                this.responses = [];
+                this.isFirebaseReady = false;
+                this.unsubscribe = null;
+
+                this.initializeEventListeners();
+                this.initializeFirebase();
+            }
+
+            async initializeFirebase() {
+                try {
+                    // Wait a moment for Firebase to load
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    if (window.firebase) {
+                        // Set up real-time listener for responses
+                        const responsesRef = window.firebase.collection(window.firebase.db, 'poll-responses');
+
+                        this.unsubscribe = window.firebase.onSnapshot(responsesRef, (snapshot) => {
+                            this.responses = [];
+                            snapshot.forEach((doc) => {
+                                this.responses.push({ id: doc.id, ...doc.data() });
+                            });
+                            this.renderMarkers();
+                            this.updateStats();
+                        }, (error) => {
+                            console.error('Error listening to Firestore:', error);
+                            this.updateStatus('Error connecting to Firebase. Using local storage.', false);
+                            this.responses = this.loadLocalResponses();
+                            this.updateDisplay();
+                        });
+
+                        this.isFirebaseReady = true;
+                        this.updateStatus('Connected to Firebase - real-time sync enabled!', true);
+                        console.log('Firebase connected successfully');
+                    } else {
+                        throw new Error('Firebase not available');
+                    }
+                } catch (error) {
+                    console.error('Firebase initialization failed:', error);
+                    this.updateStatus('Firebase unavailable. Using local storage only.', false);
+                    this.responses = this.loadLocalResponses();
+                    this.updateDisplay();
+                    this.renderMarkers();
+                }
+            }
+
+            updateStatus(message, isConnected) {
+                this.statusIndicator.textContent = message;
+                this.statusIndicator.className = `status-indicator ${isConnected ? 'status-connected' : 'status-disconnected'}`;
+            }
+
+            initializeEventListeners() {
+                this.grid.addEventListener('click', (e) => this.handleGridClick(e));
+                this.submitBtn.addEventListener('click', () => this.submitResponse());
+                this.clearBtn.addEventListener('click', () => this.clearUserMarker());
+                this.toggleBtn.addEventListener('click', () => this.toggleResults());
+
+                // Clean up Firebase listener when page unloads
+                window.addEventListener('beforeunload', () => {
+                    if (this.unsubscribe) {
+                        this.unsubscribe();
+                    }
+                });
+            }
+
+            handleGridClick(e) {
+                const rect = this.grid.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Convert to percentage (0-100)
+                const xPercent = (x / rect.width) * 100;
+                const yPercent = ((rect.height - y) / rect.height) * 100; // Flip Y axis
+
+                this.placeUserMarker(xPercent, yPercent);
+            }
+
+            placeUserMarker(x, y) {
+                // Remove existing user marker
+                if (this.userMarker) {
+                    this.userMarker.remove();
+                }
+
+                // Create new marker
+                this.userMarker = document.createElement('div');
+                this.userMarker.className = 'marker own';
+                this.userMarker.style.left = x + '%';
+                this.userMarker.style.top = (100 - y) + '%'; // Flip Y for display
+
+                this.grid.appendChild(this.userMarker);
+
+                this.userPosition = { x, y };
+                this.submitBtn.disabled = false;
+                this.updateStats();
+            }
+
+            async submitResponse() {
+                if (!this.userPosition) return;
+
+                const response = {
+                    x: this.userPosition.x,
+                    y: this.userPosition.y,
+                    timestamp: this.isFirebaseReady ?
+                        window.firebase.serverTimestamp() :
+                        new Date().toISOString(),
+                    userAgent: navigator.userAgent.substring(0, 100), // For basic analytics
+                    sessionId: this.getSessionId()
+                };
+
+                try {
+                    if (this.isFirebaseReady) {
+                        // Save to Firebase
+                        const responsesRef = window.firebase.collection(window.firebase.db, 'poll-responses');
+                        await window.firebase.addDoc(responsesRef, response);
+                        console.log('Response saved to Firebase');
+                    } else {
+                        // Fallback to local storage
+                        response.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+                        this.responses.push(response);
+                        this.saveLocalResponses();
+                        this.renderMarkers();
+                        this.updateStats();
+                    }
+
+                    this.submitBtn.disabled = true;
+                    this.submitBtn.textContent = 'Response Submitted!';
+
+                    setTimeout(() => {
+                        this.submitBtn.textContent = 'Submit My Response';
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Error submitting response:', error);
+                    alert('Failed to submit response. Please try again.');
+                }
+            }
+
+            getSessionId() {
+                // Create a simple session ID that persists during the browser session
+                if (!sessionStorage.getItem('pollSessionId')) {
+                    sessionStorage.setItem('pollSessionId',
+                        Date.now().toString() + Math.random().toString(36).substr(2, 9));
+                }
+                return sessionStorage.getItem('pollSessionId');
+            }
+
+            clearUserMarker() {
+                if (this.userMarker) {
+                    this.userMarker.remove();
+                    this.userMarker = null;
+                }
+                this.userPosition = null;
+                this.submitBtn.disabled = true;
+                this.updateStats();
+            }
+
+            toggleResults() {
+                this.showingResults = !this.showingResults;
+                this.renderMarkers();
+                this.toggleBtn.textContent = this.showingResults ?
+                    'Hide Results' : 'Show Results';
+            }
+
+            renderMarkers() {
+                // Clear all other markers (keep user marker)
+                const otherMarkers = this.grid.querySelectorAll('.marker.other');
+                otherMarkers.forEach(marker => marker.remove());
+
+                if (!this.showingResults) return;
+
+                // Render all responses
+                this.responses.forEach(response => {
+                    const marker = document.createElement('div');
+                    marker.className = 'marker other';
+                    marker.style.left = response.x + '%';
+                    marker.style.top = (100 - response.y) + '%';
+
+                    this.grid.appendChild(marker);
+                });
+            }
+
+            updateStats() {
+                const total = this.responses.length;
+                document.getElementById('totalResponses').textContent = total;
+
+                if (total > 0) {
+                    const avgX = this.responses.reduce((sum, r) => sum + r.x, 0) / total;
+                    const avgY = this.responses.reduce((sum, r) => sum + r.y, 0) / total;
+
+                    // Convert to meaningful labels
+                    const sentimentLabel = avgX < 25 ? 'Negative' :
+                                         avgX > 75 ? 'Positive' : 'Neutral';
+                    const usageLabel = avgY < 25 ? 'Low' :
+                                      avgY > 75 ? 'High' : 'Medium';
+
+                    document.getElementById('avgSentiment').textContent = sentimentLabel;
+                    document.getElementById('avgUsage').textContent = usageLabel;
+                } else {
+                    document.getElementById('avgSentiment').textContent = 'N/A';
+                    document.getElementById('avgUsage').textContent = 'N/A';
+                }
+
+                // Update user position
+                if (this.userPosition) {
+                    const userSentiment = this.userPosition.x < 25 ? 'Negative' :
+                                         this.userPosition.x > 75 ? 'Positive' : 'Neutral';
+                    const userUsage = this.userPosition.y < 25 ? 'Low' :
+                                     this.userPosition.y > 75 ? 'High' : 'Medium';
+                    document.getElementById('myPosition').textContent =
+                        `${userUsage} use, ${userSentiment}`;
+                } else {
+                    document.getElementById('myPosition').textContent = 'Not placed';
+                }
+            }
+
+            updateDisplay() {
+                this.updateStats();
+            }
+
+            loadLocalResponses() {
+                // Fallback local storage method
+                if (!window.pollResponses) {
+                    window.pollResponses = [];
+                }
+                return window.pollResponses;
+            }
+
+            saveLocalResponses() {
+                // Fallback local storage method
+                window.pollResponses = this.responses;
+            }
+        }
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PollApp();
+        });
+    </script>
+</body>
+</html>

@@ -11,12 +11,15 @@
 
         // Your Firebase config (replace with your actual config)
         const firebaseConfig = {
-          apiKey: "AIzaSyBy8hiDvyNj-UyYzsNXtpmrGtdpzDQAFVk",
-authDomain: "ai-sentiment-poll.firebaseapp.com",
-projectId: "ai-sentiment-poll",
-storageBucket: "ai-sentiment-poll.firebasestorage.app",
-messagingSenderId: "2785699686",
-appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
+          const firebaseConfig = {
+            apiKey: "AIzaSyBy8hiDvyNj-UyYzsNXtpmrGtdpzDQAFVk",
+            authDomain: "ai-sentiment-poll.firebaseapp.com",
+            projectId: "ai-sentiment-poll",
+            storageBucket: "ai-sentiment-poll.firebasestorage.app",
+            messagingSenderId: "2785699686",
+            appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
+          };
+
         };
 
         // Initialize Firebase
@@ -40,6 +43,23 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             padding: 20px;
             color: black;
             line-height: 1.4;
+            position: relative;
+        }
+
+        .status-light {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-light.connected {
+            background: #44ff44;
         }
 
         .container {
@@ -49,17 +69,10 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
         }
 
         h1 {
-            margin-bottom: 8px;
+            margin-bottom: 40px;
             font-size: 2.5em;
             font-weight: 300;
             letter-spacing: -0.02em;
-        }
-
-        .subtitle {
-            margin-bottom: 40px;
-            font-size: 1em;
-            font-weight: 400;
-            color: #666;
         }
 
         .poll-container {
@@ -209,6 +222,7 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             width: 8px;
             height: 8px;
             background: black;
+            border-radius: 50%;
             transform: translate(-50%, -50%);
             transition: all 0.2s ease;
         }
@@ -217,6 +231,7 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             background: black;
             width: 12px;
             height: 12px;
+            border-radius: 50%;
             z-index: 100;
             border: 2px solid white;
             box-shadow: 0 0 0 1px black;
@@ -226,6 +241,7 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             background: #666;
             width: 6px;
             height: 6px;
+            border-radius: 50%;
         }
 
         .marker:hover {
@@ -301,29 +317,16 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             color: #666;
         }
 
-        .status-indicator {
-            margin-bottom: 20px;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .status-connected {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-disconnected {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
         @media (max-width: 768px) {
             body {
                 padding: 15px;
+            }
+
+            .status-light {
+                top: 15px;
+                right: 15px;
+                width: 10px;
+                height: 10px;
             }
 
             .poll-container {
@@ -391,13 +394,10 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
     </style>
 </head>
 <body>
+    <div id="statusLight" class="status-light"></div>
+
     <div class="container">
         <h1>AI Use vs Sentiment Poll</h1>
-        <p class="subtitle">Place your marker to show where you stand</p>
-
-        <div id="statusIndicator" class="status-indicator status-disconnected">
-            Connecting to Firebase...
-        </div>
 
         <div class="instructions">
             <strong>Instructions:</strong> Click anywhere on the grid to place your marker. The vertical axis represents your AI use level (high to low), and the horizontal axis represents how you feel about AI (negative to positive). <strong>Submit your response to see how others voted!</strong> Only one response per IP address is allowed.
@@ -452,12 +452,13 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
                 this.submitBtn = document.getElementById('submitBtn');
                 this.clearBtn = document.getElementById('clearBtn');
                 this.toggleBtn = document.getElementById('toggleResults');
-                this.statusIndicator = document.getElementById('statusIndicator');
+                this.statusLight = document.getElementById('statusLight');
 
                 this.userMarker = null;
                 this.userPosition = null;
                 this.showingResults = false; // Start with results hidden
                 this.hasSubmitted = false; // Track if user has submitted
+                this.userSubmittedPosition = null; // Store submitted position for display
                 this.responses = [];
                 this.isFirebaseReady = false;
                 this.unsubscribe = null;
@@ -488,20 +489,20 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
                             this.updateStats();
                         }, (error) => {
                             console.error('Error listening to Firestore:', error);
-                            this.updateStatus('Error connecting to Firebase. Using local storage.', false);
+                            this.updateStatus(false);
                             this.responses = this.loadLocalResponses();
                             this.updateDisplay();
                         });
 
                         this.isFirebaseReady = true;
-                        this.updateStatus('Connected to Firebase - real-time sync enabled!', true);
+                        this.updateStatus(true);
                         console.log('Firebase connected successfully');
                     } else {
                         throw new Error('Firebase not available');
                     }
                 } catch (error) {
                     console.error('Firebase initialization failed:', error);
-                    this.updateStatus('Firebase unavailable. Using local storage only.', false);
+                    this.updateStatus(false);
                     this.responses = this.loadLocalResponses();
                     await this.checkIfUserSubmitted();
                     this.updateDisplay();
@@ -511,24 +512,41 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
 
             async checkIfUserSubmitted() {
                 const userIP = await this.getUserIP();
-                if (this.hasIPSubmitted(userIP)) {
+                const userResponse = this.responses.find(response => response.userIP === userIP);
+
+                if (userResponse) {
+                    // Found user's response in current data
                     this.hasSubmitted = true;
-                    this.showingResults = true; // Show results if already submitted
+                    this.showingResults = true;
                     this.submitBtn.disabled = true;
                     this.submitBtn.textContent = 'Already Submitted';
                     this.toggleBtn.textContent = 'Hide Results';
+                    this.userSubmittedPosition = { x: userResponse.x, y: userResponse.y };
+
+                    if (this.userMarker) {
+                        this.clearUserMarker();
+                    }
+                } else if (this.hasIPSubmitted(userIP)) {
+                    // IP is marked as submitted but response not in current data
+                    // This can happen if Firebase hasn't loaded all responses yet
+                    this.hasSubmitted = true;
+                    this.showingResults = true;
+                    this.submitBtn.disabled = true;
+                    this.submitBtn.textContent = 'Already Submitted';
+                    this.toggleBtn.textContent = 'Hide Results';
+                    // Note: userSubmittedPosition will remain null until response loads
+
                     if (this.userMarker) {
                         this.clearUserMarker();
                     }
                 } else {
                     this.toggleBtn.textContent = 'Submit to See Results';
-                    this.toggleBtn.disabled = true; // Disable until submission
+                    this.toggleBtn.disabled = true;
                 }
             }
 
-            updateStatus(message, isConnected) {
-                this.statusIndicator.textContent = message;
-                this.statusIndicator.className = `status-indicator ${isConnected ? 'status-connected' : 'status-disconnected'}`;
+            updateStatus(isConnected) {
+                this.statusLight.className = `status-light ${isConnected ? 'connected' : ''}`;
             }
 
             initializeEventListeners() {
@@ -613,6 +631,12 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
                         this.showingResults = true; // Enable results after submission
                         this.toggleBtn.disabled = false; // Enable toggle button
                         this.toggleBtn.textContent = 'Hide Results';
+
+                        // Store the submitted position for display
+                        this.userSubmittedPosition = { x: this.userPosition.x, y: this.userPosition.y };
+
+                        // Store the submitted position for display
+                        this.userSubmittedPosition = { x: this.userPosition.x, y: this.userPosition.y };
                     } else {
                         // Fallback to local storage
                         response.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
@@ -656,9 +680,8 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             }
 
             hasIPSubmitted(userIP) {
-                // Check if current responses include this IP
-                return this.responses.some(response => response.userIP === userIP) ||
-                       this.getSubmittedIPs().includes(userIP);
+                // Only check localStorage, not this.responses (that's checked separately)
+                return this.getSubmittedIPs().includes(userIP);
             }
 
             markIPAsSubmitted(userIP) {
@@ -745,11 +768,12 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
                 }
 
                 // Update user position
-                if (this.userPosition) {
-                    const userSentiment = this.userPosition.x < 25 ? 'Negative' :
-                                         this.userPosition.x > 75 ? 'Positive' : 'Neutral';
-                    const userUsage = this.userPosition.y < 25 ? 'Low' :
-                                     this.userPosition.y > 75 ? 'High' : 'Medium';
+                const displayPosition = this.userPosition || this.userSubmittedPosition;
+                if (displayPosition) {
+                    const userSentiment = displayPosition.x < 25 ? 'Negative' :
+                                         displayPosition.x > 75 ? 'Positive' : 'Neutral';
+                    const userUsage = displayPosition.y < 25 ? 'Low' :
+                                     displayPosition.y > 75 ? 'High' : 'Medium';
                     document.getElementById('myPosition').textContent =
                         `${userUsage} use, ${userSentiment}`;
                 } else {

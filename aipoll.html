@@ -12,11 +12,11 @@
         // Your Firebase config (replace with your actual config)
         const firebaseConfig = {
           apiKey: "AIzaSyBy8hiDvyNj-UyYzsNXtpmrGtdpzDQAFVk",
-    authDomain: "ai-sentiment-poll.firebaseapp.com",
-    projectId: "ai-sentiment-poll",
-    storageBucket: "ai-sentiment-poll.firebasestorage.app",
-    messagingSenderId: "2785699686",
-    appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
+authDomain: "ai-sentiment-poll.firebaseapp.com",
+projectId: "ai-sentiment-poll",
+storageBucket: "ai-sentiment-poll.firebasestorage.app",
+messagingSenderId: "2785699686",
+appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
         };
 
 
@@ -419,7 +419,6 @@
             <div class="controls">
                 <button id="submitBtn" disabled>Submit My Response</button>
                 <button id="clearBtn">Clear My Marker</button>
-                <button id="toggleResults" disabled>Submit to See Results</button>
             </div>
 
             <div class="stats">
@@ -449,7 +448,6 @@
                 this.grid = document.getElementById('grid');
                 this.submitBtn = document.getElementById('submitBtn');
                 this.clearBtn = document.getElementById('clearBtn');
-                this.toggleBtn = document.getElementById('toggleResults');
                 this.statusLight = document.getElementById('statusLight');
 
                 this.userMarker = null;
@@ -518,7 +516,6 @@
                     this.showingResults = true;
                     this.submitBtn.disabled = true;
                     this.submitBtn.textContent = 'Already Submitted';
-                    this.toggleBtn.textContent = 'Hide Results';
                     this.userSubmittedPosition = { x: userResponse.x, y: userResponse.y };
 
                     if (this.userMarker) {
@@ -531,15 +528,14 @@
                     this.showingResults = true;
                     this.submitBtn.disabled = true;
                     this.submitBtn.textContent = 'Already Submitted';
-                    this.toggleBtn.textContent = 'Hide Results';
                     // Note: userSubmittedPosition will remain null until response loads
 
                     if (this.userMarker) {
                         this.clearUserMarker();
                     }
                 } else {
-                    this.toggleBtn.textContent = 'Submit to See Results';
-                    this.toggleBtn.disabled = true;
+                    // User hasn't submitted yet - results stay hidden
+                    this.showingResults = false;
                 }
             }
 
@@ -551,7 +547,6 @@
                 this.grid.addEventListener('click', (e) => this.handleGridClick(e));
                 this.submitBtn.addEventListener('click', () => this.submitResponse());
                 this.clearBtn.addEventListener('click', () => this.clearUserMarker());
-                this.toggleBtn.addEventListener('click', () => this.toggleResults());
 
                 // Clean up Firebase listener when page unloads
                 window.addEventListener('beforeunload', () => {
@@ -626,9 +621,7 @@
                         // Mark this IP as having submitted
                         this.markIPAsSubmitted(userIP);
                         this.hasSubmitted = true;
-                        this.showingResults = true; // Enable results after submission
-                        this.toggleBtn.disabled = false; // Enable toggle button
-                        this.toggleBtn.textContent = 'Hide Results';
+                        this.showingResults = true; // Show results after submission
 
                         // Store the submitted position for display
                         this.userSubmittedPosition = { x: this.userPosition.x, y: this.userPosition.y };
@@ -731,6 +724,7 @@
                 const otherMarkers = this.grid.querySelectorAll('.marker.other');
                 otherMarkers.forEach(marker => marker.remove());
 
+                // Only show results if user has submitted
                 if (!this.showingResults) return;
 
                 // Render all responses

@@ -11,14 +11,13 @@
 
         // Your Firebase config (replace with your actual config)
         const firebaseConfig = {
-          apiKey: "AIzaSyBy8hiDvyNj-UyYzsNXtpmrGtdpzDQAFVk",
+        apiKey: "AIzaSyBy8hiDvyNj-UyYzsNXtpmrGtdpzDQAFVk",
 authDomain: "ai-sentiment-poll.firebaseapp.com",
 projectId: "ai-sentiment-poll",
 storageBucket: "ai-sentiment-poll.firebasestorage.app",
 messagingSenderId: "2785699686",
 appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
-        };
-
+      };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
@@ -418,7 +417,6 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
 
             <div class="controls">
                 <button id="submitBtn" disabled>Submit My Response</button>
-                <button id="clearBtn">Clear My Marker</button>
             </div>
 
             <div class="stats">
@@ -447,7 +445,6 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             constructor() {
                 this.grid = document.getElementById('grid');
                 this.submitBtn = document.getElementById('submitBtn');
-                this.clearBtn = document.getElementById('clearBtn');
                 this.statusLight = document.getElementById('statusLight');
 
                 this.userMarker = null;
@@ -552,7 +549,6 @@ appId: "1:2785699686:web:4217d9f4eb7be2b2d7caa7"
             initializeEventListeners() {
                 this.grid.addEventListener('click', (e) => this.handleGridClick(e));
                 this.submitBtn.addEventListener('click', () => this.submitResponse());
-                this.clearBtn.addEventListener('click', () => this.clearUserMarker());
 
                 // Clean up Firebase listener when page unloads
                 window.addEventListener('beforeunload', () => {

@@ -453,12 +453,6 @@
                 <div id="allResponses">
                     <p>Loading responses...</p>
                 </div>
-                
-                <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid #ddd;">
-                   <button class="admin-btn" id="resetBtn" disabled>🗑️ Reset All Data</button>
-                  <p style="margin-top: 10px; color: #666; font-size: 14px;">⚠️ Instructor only - This will delete all student responses</p>
-                </div>
-              
             </div>
         </div>
     </div>
@@ -539,7 +533,6 @@
             
             const buttonsDisabled = (type === 'loading' || type === 'error');
             document.getElementById('submitBtn').disabled = buttonsDisabled;
-            document.getElementById('resetBtn').disabled = buttonsDisabled;
             document.getElementById('showAveragesBtn').disabled = buttonsDisabled;
         }
 
@@ -581,7 +574,6 @@
 
         function setupEventListeners() {
             document.getElementById('submitBtn').addEventListener('click', submitResponse);
-            document.getElementById('resetBtn').addEventListener('click', resetAllData);
             document.getElementById('showAveragesBtn').addEventListener('click', showAveragePositions);
         }
 
@@ -727,23 +719,6 @@
                 // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Survey Response';
-            }
-        }
-
-        async function resetAllData() {
-            if (!firebaseConnected) {
-                showMessage('Database not connected.', 'error');
-                return;
-            }
-
-            if (confirm('⚠️ Are you sure you want to delete ALL survey responses? This cannot be undone!')) {
-                try {
-                    await db.ref('survey-responses').remove();
-                    showMessage('All survey data has been cleared successfully.', 'success');
-                } catch (error) {
-                    console.error('Error clearing data:', error);
-                    showMessage('Error clearing data. Please try again.', 'error');
-                }
             }
         }
 

@@ -742,6 +742,16 @@
             surveyResponses.forEach(response => {
                 if (response.colorPlacements) {
                     Object.entries(response.colorPlacements).forEach(([color, data]) => {
+                        valid = false;
+                        for (const colorname in colorStyles) {
+                            console.log(colorname);
+                            if (color == colorname) {
+                                valid = true;
+                            }
+                        }
+                        if (!valid) {
+                            return;
+                        }
                         colorAverages[color].x += data.x;
                         colorAverages[color].y += data.y;
                         colorCounts[color]++;

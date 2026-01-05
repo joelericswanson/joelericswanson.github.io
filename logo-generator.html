@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Design Assignment Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #000;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        header {
+            border-bottom: 3px solid #000;
+            padding-bottom: 24px;
+            margin-bottom: 48px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+        }
+
+        .constraints-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+            border-top: 1px solid #000;
+            margin-bottom: 48px;
+        }
+
+        .constraint-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            border-bottom: 1px solid #000;
+        }
+
+        .constraint-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            padding: 16px 16px 16px 0;
+            border-right: 1px solid #000;
+        }
+
+        .constraint-content {
+            padding: 16px;
+        }
+
+        .constraint-value {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .constraint-description {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .actions {
+            margin-bottom: 48px;
+        }
+
+        button {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 16px 24px;
+            border: 2px solid #000;
+            background: #fff;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        button:hover {
+            background: #000;
+            color: #fff;
+        }
+
+        button.primary {
+            background: #000;
+            color: #fff;
+        }
+
+        button.primary:hover {
+            background: #333;
+        }
+
+        footer {
+            margin-top: 64px;
+            padding-top: 24px;
+            border-top: 1px solid #ccc;
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Logo Design Assignment Generator</h1>
+            <div class="subtitle">Randomized Constraint System — Submit grayscale on 8.5×11" paper</div>
+        </header>
+
+        <div class="constraints-grid" id="constraintsGrid">
+            <div class="constraint-row">
+                <div class="constraint-label">Logo Type</div>
+                <div class="constraint-content">
+                    <div class="constraint-value" id="logoType">—</div>
+                    <div class="constraint-description" id="logoTypeDesc"></div>
+                </div>
+            </div>
+            <div class="constraint-row">
+                <div class="constraint-label">Industry</div>
+                <div class="constraint-content">
+                    <div class="constraint-value" id="industry">—</div>
+                    <div class="constraint-description" id="industryDesc"></div>
+                </div>
+            </div>
+            <div class="constraint-row">
+                <div class="constraint-label">Style</div>
+                <div class="constraint-content">
+                    <div class="constraint-value" id="style">—</div>
+                    <div class="constraint-description" id="styleDesc"></div>
+                </div>
+            </div>
+            <div class="constraint-row">
+                <div class="constraint-label">Technical</div>
+                <div class="constraint-content">
+                    <div class="constraint-value" id="technical">—</div>
+                    <div class="constraint-description" id="technicalDesc"></div>
+                </div>
+            </div>
+            <div class="constraint-row">
+                <div class="constraint-label">Conceptual</div>
+                <div class="constraint-content">
+                    <div class="constraint-value" id="conceptual">—</div>
+                    <div class="constraint-description" id="conceptualDesc"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="primary" onclick="generateAssignment()">Generate New Assignment</button>
+        </div>
+
+        <footer>
+            Visual Identity Course Tool — All assignments printed grayscale on 8.5×11"
+        </footer>
+    </div>
+
+    <script>
+        const data = {
+            logoType: [
+                { value: "Wordmark", desc: "Company name as the logo, typographic treatment" },
+                { value: "Lettermark", desc: "Initials or acronym as the primary mark" },
+                { value: "Monogram", desc: "Interlocking or decorative letterforms" },
+                { value: "Pictorial Mark", desc: "Recognizable image or icon representing the brand" },
+                { value: "Abstract Mark", desc: "Geometric or abstract form, non-representational" },
+                { value: "Mascot", desc: "Illustrated character representing the brand" },
+                { value: "Emblem", desc: "Text inside a symbol or badge, unified form" },
+                { value: "Combination Mark", desc: "Text and symbol that can work together or apart" },
+                { value: "Student's Choice", desc: "You decide the logo type" }
+            ],
+            industry: [
+                { value: "Restaurant", desc: "Food service, dining establishment" },
+                { value: "Tech Startup", desc: "Emerging technology company" },
+                { value: "Nonprofit Organization", desc: "Charitable or social cause entity" },
+                { value: "Fitness Brand", desc: "Gym, athletic wear, or wellness company" },
+                { value: "Independent Bookstore", desc: "Curated retail book seller" },
+                { value: "Law Firm", desc: "Legal services practice" },
+                { value: "Coffee Roaster", desc: "Specialty coffee producer" },
+                { value: "Music Venue", desc: "Live performance space" },
+                { value: "Architecture Studio", desc: "Design and construction firm" },
+                { value: "Craft Brewery", desc: "Small-batch beer producer" },
+                { value: "Dental Practice", desc: "Oral health care provider" },
+                { value: "Pet Supply Store", desc: "Animal care retail" },
+                { value: "Real Estate Agency", desc: "Property sales and management" },
+                { value: "Yoga Studio", desc: "Mindfulness and movement space" },
+                { value: "Vintage Clothing Shop", desc: "Curated secondhand fashion" },
+                { value: "Food Truck", desc: "Mobile culinary service" },
+                { value: "Co-working Space", desc: "Shared office environment" },
+                { value: "Podcast Network", desc: "Audio content production" },
+                { value: "Museum", desc: "Cultural or historical institution" },
+                { value: "Film Production Company", desc: "Video and cinema creation" },
+                { value: "Agricultural/Farm Brand", desc: "Farming, produce, rural enterprise" },
+                { value: "Funeral Home", desc: "End-of-life services, memorial care" },
+                { value: "Children's Brand", desc: "Toys, daycare, pediatric services" },
+                { value: "Cannabis Dispensary", desc: "Legal cannabis retail" },
+                { value: "Religious Organization", desc: "Church, temple, interfaith center" },
+                { value: "Political Campaign", desc: "Electoral candidate or initiative" },
+                { value: "Sports Team", desc: "Athletic organization, club, league" },
+                { value: "Airline", desc: "Aviation, air travel carrier" },
+                { value: "Transit Authority", desc: "Public transportation system" },
+                { value: "University", desc: "Higher education institution" },
+                { value: "Environmental Advocacy Group", desc: "Activist organization, conservation" },
+                { value: "Construction Company", desc: "Building, contracting, development" },
+                { value: "Accounting Firm", desc: "Financial services, tax preparation" },
+                { value: "Tattoo Studio", desc: "Body art, custom ink" },
+                { value: "Wedding Planner", desc: "Event coordination, matrimonial services" },
+                { value: "Cybersecurity Firm", desc: "Digital protection, threat prevention" },
+                { value: "Student's Choice", desc: "You decide the industry" }
+            ],
+            style: [
+                { value: "Geometric", desc: "Constructed from basic shapes and forms" },
+                { value: "Organic", desc: "Hand-drawn, natural, flowing forms" },
+                { value: "Minimalist", desc: "Reduced to essential elements only" },
+                { value: "Retro/Vintage", desc: "References historical design periods" },
+                { value: "Bold & Loud", desc: "High contrast, demanding attention" },
+                { value: "Elegant & Refined", desc: "Sophisticated, understated luxury" },
+                { value: "Playful", desc: "Whimsical, fun, approachable" },
+                { value: "Brutalist", desc: "Raw, unpolished, deliberately rough" },
+                { value: "Art Deco", desc: "1920s–30s geometric glamour" },
+                { value: "Corporate Neutral", desc: "Professional, trustworthy, conventional" },
+                { value: "Hand-lettered", desc: "Custom drawn letterforms, calligraphic" },
+                { value: "Swiss/International Style", desc: "Grid-based, Helvetica, rational" },
+                { value: "Memphis/Postmodern", desc: "1980s bold patterns, clashing geometry" },
+                { value: "Bauhaus", desc: "Geometric forms, functionalist, modernist" },
+                { value: "Grunge/Distressed", desc: "Textured, worn, lo-fi aesthetic" },
+                { value: "Futurism", desc: "Speed lines, dynamism, avant-garde" },
+                { value: "Vernacular/Found", desc: "Undesigned, hand-painted sign aesthetic" },
+                { value: "Cottagecore/Folk", desc: "Pastoral, handmade, nostalgic craft" },
+                { value: "Student's Choice", desc: "You decide the style" }
+            ],
+            technical: [
+                { value: "Must Include Negative Space", desc: "Meaningful use of empty areas" },
+                { value: "Grid-Based Construction", desc: "Built on geometric grid system" },
+                { value: "Single Continuous Line", desc: "One unbroken stroke" },
+                { value: "Modular/Repeating Elements", desc: "Pattern or system-based" },
+                { value: "All Typography Made From Scratch", desc: "No existing typefaces, custom letterforms" },
+                { value: "Must Be Ambigram/Reversible", desc: "Reads same when rotated" },
+                { value: "Must Include a Hidden Element", desc: "Easter egg or embedded symbol" },
+                { value: "Optical Illusion Required", desc: "Perceptual tricks and ambiguity" },
+                { value: "Uses Only 3 Lines Maximum", desc: "Extreme reduction and economy" },
+                { value: "Must Tessellate/Tile", desc: "Can repeat as seamless pattern" },
+                { value: "Uses Only Dots/Stippling", desc: "Point-based rendering" },
+                { value: "Victorian Ornamental Style", desc: "Decorative, elaborate detailing" },
+                { value: "Vesica Piscis Construction", desc: "Built from overlapping circles" },
+                { value: "No Curves Allowed", desc: "Straight lines and angles only" },
+                { value: "No Straight Lines Allowed", desc: "Curves and organic forms only" },
+                { value: "Must Function as Rubber Stamp", desc: "Single-color, no fine detail" },
+                { value: "Uses Only One Typeface Weight", desc: "No bold/light contrast" },
+                { value: "Must Include Company Initials", desc: "Forces integration of letters" },
+                { value: "Must Work at 16×16 Pixels", desc: "Favicon test, extreme reduction" },
+                { value: "Designed for Embroidery", desc: "Thread/textile constraints" },
+                { value: "Incorporates Found/Collage Elements", desc: "Mixed media, appropriation" },
+                { value: "Student's Choice", desc: "You decide the technical constraint" }
+            ],
+            conceptual: [
+                { value: "Represents Growth", desc: "Expansion, development, progress" },
+                { value: "Conveys Trust", desc: "Reliability, security, confidence" },
+                { value: "Emphasizes Speed", desc: "Quickness, efficiency, momentum" },
+                { value: "Suggests Tradition", desc: "Heritage, history, establishment" },
+                { value: "Evokes Nature", desc: "Organic, environmental, natural world" },
+                { value: "Communicates Innovation", desc: "Forward-thinking, cutting-edge" },
+                { value: "Expresses Community", desc: "Togetherness, belonging, collective" },
+                { value: "Projects Precision", desc: "Accuracy, attention to detail" },
+                { value: "Radiates Warmth", desc: "Welcoming, friendly, approachable" },
+                { value: "Embraces Chaos", desc: "Disorder, spontaneity, entropy" },
+                { value: "Shows Rebellion", desc: "Counterculture, defiance, disruption" },
+                { value: "Channels Nostalgia", desc: "Memory, sentimentality, the past" },
+                { value: "Suggests Mystery", desc: "Intrigue, the unknown, depth" },
+                { value: "Celebrates Diversity", desc: "Inclusion, variety, multiplicity" },
+                { value: "Conveys Sustainability", desc: "Environmental responsibility" },
+                { value: "Expresses Authenticity", desc: "Genuine, unpolished, real" },
+                { value: "Embodies Luxury", desc: "Premium, exclusive, aspirational" },
+                { value: "Signals Accessibility", desc: "Open, democratic, welcoming to all" },
+                { value: "Communicates Urgency", desc: "Time-sensitive, call to action" },
+                { value: "Evokes Stillness", desc: "Calm, meditation, pause" },
+                { value: "Suggests Tension", desc: "Conflict, duality, opposing forces" },
+                { value: "Expresses Joy", desc: "Celebration, delight, happiness" },
+                { value: "Conveys Authority", desc: "Power, expertise, dominance" },
+                { value: "Projects Humility", desc: "Modest, understated, self-aware" },
+                { value: "Implies Secrecy", desc: "Private, exclusive, hidden knowledge" },
+                { value: "Celebrates Craft", desc: "Handmade, artisanal, labor-intensive" },
+                { value: "Signals Transformation", desc: "Change, metamorphosis, becoming" },
+                { value: "Embodies Simplicity", desc: "Clarity, reduction, essentialism" },
+                { value: "Student's Choice", desc: "You decide the conceptual direction" }
+            ]
+        };
+
+        function getRandomItem(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function generateAssignment() {
+            const assignment = {
+                logoType: getRandomItem(data.logoType),
+                industry: getRandomItem(data.industry),
+                style: getRandomItem(data.style),
+                technical: getRandomItem(data.technical),
+                conceptual: getRandomItem(data.conceptual)
+            };
+
+            displayAssignment(assignment);
+        }
+
+        function displayAssignment(assignment) {
+            
+            document.getElementById('logoType').textContent = assignment.logoType.value;
+            document.getElementById('logoTypeDesc').textContent = assignment.logoType.desc;
+            
+            document.getElementById('industry').textContent = assignment.industry.value;
+            document.getElementById('industryDesc').textContent = assignment.industry.desc;
+            
+            document.getElementById('style').textContent = assignment.style.value;
+            document.getElementById('styleDesc').textContent = assignment.style.desc;
+            
+            document.getElementById('technical').textContent = assignment.technical.value;
+            document.getElementById('technicalDesc').textContent = assignment.technical.desc;
+            
+            document.getElementById('conceptual').textContent = assignment.conceptual.value;
+            document.getElementById('conceptualDesc').textContent = assignment.conceptual.desc;
+
+            // Store current assignment for copying
+            window.currentAssignment = assignment;
+        }
+
+        // Generate initial assignment on load
+        generateAssignment();
+    </script>
+</body>
+</html>

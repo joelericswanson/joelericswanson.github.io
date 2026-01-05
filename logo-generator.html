@@ -156,13 +156,7 @@
                     <div class="constraint-description" id="styleDesc"></div>
                 </div>
             </div>
-            <div class="constraint-row">
-                <div class="constraint-label">Technical</div>
-                <div class="constraint-content">
-                    <div class="constraint-value" id="technical">—</div>
-                    <div class="constraint-description" id="technicalDesc"></div>
-                </div>
-            </div>
+
             <div class="constraint-row">
                 <div class="constraint-label">Conceptual</div>
                 <div class="constraint-content">
@@ -254,30 +248,7 @@
                 { value: "Cottagecore/Folk", desc: "Pastoral, handmade, nostalgic craft" },
                 { value: "Student's Choice", desc: "You decide the style" }
             ],
-            technical: [
-                { value: "Must Include Negative Space", desc: "Meaningful use of empty areas" },
-                { value: "Grid-Based Construction", desc: "Built on geometric grid system" },
-                { value: "Single Continuous Line", desc: "One unbroken stroke" },
-                { value: "Modular/Repeating Elements", desc: "Pattern or system-based" },
-                { value: "All Typography Made From Scratch", desc: "No existing typefaces, custom letterforms" },
-                { value: "Must Be Ambigram/Reversible", desc: "Reads same when rotated" },
-                { value: "Must Include a Hidden Element", desc: "Easter egg or embedded symbol" },
-                { value: "Optical Illusion Required", desc: "Perceptual tricks and ambiguity" },
-                { value: "Uses Only 3 Lines Maximum", desc: "Extreme reduction and economy" },
-                { value: "Must Tessellate/Tile", desc: "Can repeat as seamless pattern" },
-                { value: "Uses Only Dots/Stippling", desc: "Point-based rendering" },
-                { value: "Victorian Ornamental Style", desc: "Decorative, elaborate detailing" },
-                { value: "Vesica Piscis Construction", desc: "Built from overlapping circles" },
-                { value: "No Curves Allowed", desc: "Straight lines and angles only" },
-                { value: "No Straight Lines Allowed", desc: "Curves and organic forms only" },
-                { value: "Must Function as Rubber Stamp", desc: "Single-color, no fine detail" },
-                { value: "Uses Only One Typeface Weight", desc: "No bold/light contrast" },
-                { value: "Must Include Company Initials", desc: "Forces integration of letters" },
-                { value: "Must Work at 16×16 Pixels", desc: "Favicon test, extreme reduction" },
-                { value: "Designed for Embroidery", desc: "Thread/textile constraints" },
-                { value: "Incorporates Found/Collage Elements", desc: "Mixed media, appropriation" },
-                { value: "Student's Choice", desc: "You decide the technical constraint" }
-            ],
+
             conceptual: [
                 { value: "Represents Growth", desc: "Expansion, development, progress" },
                 { value: "Conveys Trust", desc: "Reliability, security, confidence" },
@@ -320,7 +291,6 @@
                 logoType: getRandomItem(data.logoType),
                 industry: getRandomItem(data.industry),
                 style: getRandomItem(data.style),
-                technical: getRandomItem(data.technical),
                 conceptual: getRandomItem(data.conceptual)
             };
 
@@ -328,19 +298,16 @@
         }
 
         function displayAssignment(assignment) {
-            
+
             document.getElementById('logoType').textContent = assignment.logoType.value;
             document.getElementById('logoTypeDesc').textContent = assignment.logoType.desc;
-            
+
             document.getElementById('industry').textContent = assignment.industry.value;
             document.getElementById('industryDesc').textContent = assignment.industry.desc;
-            
+
             document.getElementById('style').textContent = assignment.style.value;
             document.getElementById('styleDesc').textContent = assignment.style.desc;
-            
-            document.getElementById('technical').textContent = assignment.technical.value;
-            document.getElementById('technicalDesc').textContent = assignment.technical.desc;
-            
+
             document.getElementById('conceptual').textContent = assignment.conceptual.value;
             document.getElementById('conceptualDesc').textContent = assignment.conceptual.desc;
 

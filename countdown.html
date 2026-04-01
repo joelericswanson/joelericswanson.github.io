@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countdown</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #fff;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #container {
+    text-align: center;
+  }
+
+  #clock {
+    font-size: clamp(12rem, 40vw, 32rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.4s ease;
+  }
+
+  #clock.negative {
+    color: #fff;
+  }
+
+  #start {
+    margin-top: 2rem;
+    background: none;
+    border: 2px solid #fff;
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 1.25rem;
+    padding: 0.6em 2em;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  #start:hover {
+    background: #fff;
+    color: #000;
+  }
+
+  #start.hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="clock">1:00.00</div>
+  <button id="start">Start</button>
+</div>
+
+<script>
+  const clockEl = document.getElementById('clock');
+  const startBtn = document.getElementById('start');
+
+  const TOTAL_MS = 60000;       // 1 minute countdown
+  const NEGATIVE_MS = 60000;    // 1 minute negative
+  let startTime = null;
+  let rafId = null;
+
+  function format(ms, negative) {
+    const absMs = Math.abs(ms);
+    const totalSec = Math.floor(absMs / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const millis = Math.floor((absMs % 1000) / 10);
+    const sign = negative ? '-' : '';
+    return sign + m + ':' + String(s).padStart(2, '0') + '.' + String(millis).padStart(2, '0');
+  }
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const remaining = TOTAL_MS - elapsed;
+
+    if (remaining > 0) {
+      clockEl.textContent = format(remaining, false);
+      clockEl.classList.remove('negative');
+    } else {
+      const negativeElapsed = Math.abs(remaining);
+      if (negativeElapsed >= NEGATIVE_MS) {
+        clockEl.textContent = '-1:00.00';
+        clockEl.classList.add('negative');
+        return; // done
+      }
+      clockEl.textContent = format(remaining, true);
+      clockEl.classList.add('negative');
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  startBtn.addEventListener('click', () => {
+    startBtn.classList.add('hidden');
+    clockEl.textContent = '1:00.00';
+    startTime = performance.now();
+    rafId = requestAnimationFrame(tick);
+  });
+</script>
+
+</body>
+</html>
